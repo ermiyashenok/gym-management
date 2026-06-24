@@ -1,0 +1,196 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --color-tertiary: #ffb68a;
+    --color-on-tertiary-container: #481e00;
+    --color-on-secondary-fixed: #181b25;
+    --color-secondary: #c4c6d3;
+    --color-inverse-primary: #2d50d9;
+    --color-outline-variant: #cbd5e1;
+    --color-error-container: #93000a;
+    --color-surface-dim: #f1f5f9;
+    --color-outline: #94a3b8;
+    --color-danger-red: #ef4444;
+    --color-on-tertiary-fixed: #321300;
+    --color-on-primary-container: #eff6ff;
+    --color-tertiary-fixed-dim: #ffb68a;
+    --color-primary-fixed-dim: #b9c3ff;
+    --color-secondary-container: #e2e8f0;
+    --color-on-secondary-container: #475569;
+    --color-surface-container: #f8fafc;
+    --color-on-background: #0f172a;
+    --color-error: #ffb4ab;
+    --color-surface-container-highest: #e2e8f0;
+    --color-on-secondary-fixed-variant: #444652;
+    --color-surface: #ffffff;
+    --color-primary-container: #dbeafe;
+    --color-inverse-on-surface: #f1f5f9;
+    --color-background: #ffffff;
+    --color-surface-container-high: #f1f5f9;
+    --color-on-primary-fixed-variant: #1e3a8a;
+    --color-surface-container-low: #f8fafc;
+    --color-primary-fixed: #bfdbfe;
+    --color-primary: #2563eb;
+    --color-inverse-surface: #0f172a;
+    --color-tertiary-container: #e1721e;
+    --color-on-tertiary: #522300;
+    --color-on-secondary: #0f172a;
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-variant: #f1f5f9;
+    --color-secondary-fixed: #e0e2f0;
+    --color-on-primary: #ffffff;
+    --color-surface-tint: #2563eb;
+    --color-text-muted: #64748b;
+    --color-on-primary-fixed: #172554;
+    --color-on-error-container: #ffdad6;
+    --color-border-subtle: #e2e8f0;
+    --color-success-emerald: #16a34a;
+    --color-text-primary: #0f172a;
+    --color-on-tertiary-fixed-variant: #743500;
+    --color-surface-bright: #ffffff;
+    --color-on-surface: #0f172a;
+    --color-secondary-fixed-dim: #c4c6d3;
+    --color-on-surface-variant: #334155;
+    --color-tertiary-fixed: #ffdbc8;
+    --color-on-error: #690005;
+    --color-warning-orange: #f97316;
+  }
+  .dark {
+    color-scheme: dark;
+    --color-tertiary: #ffb68a;
+    --color-on-tertiary-container: #481e00;
+    --color-on-secondary-fixed: #181b25;
+    --color-secondary: #c4c6d3;
+    --color-inverse-primary: #2d50d9;
+    --color-outline-variant: #444654;
+    --color-error-container: #93000a;
+    --color-surface-dim: #111319;
+    --color-outline: #8e90a0;
+    --color-danger-red: #ef4444;
+    --color-on-tertiary-fixed: #321300;
+    --color-on-primary-container: #001d79;
+    --color-tertiary-fixed-dim: #ffb68a;
+    --color-primary-fixed-dim: #b9c3ff;
+    --color-secondary-container: #444652;
+    --color-on-secondary-container: #b2b4c2;
+    --color-surface-container: #1e1f26;
+    --color-on-background: #e2e2eb;
+    --color-error: #ffb4ab;
+    --color-surface-container-highest: #33343b;
+    --color-on-secondary-fixed-variant: #444652;
+    --color-surface: #1a1d27;
+    --color-primary-container: #6e88ff;
+    --color-inverse-on-surface: #2e3037;
+    --color-background: #111319;
+    --color-surface-container-high: #282a30;
+    --color-on-primary-fixed-variant: #0034c0;
+    --color-surface-container-low: #191b22;
+    --color-primary-fixed: #dde1ff;
+    --color-primary: #b9c3ff;
+    --color-inverse-surface: #e2e2eb;
+    --color-tertiary-container: #e1721e;
+    --color-on-tertiary: #522300;
+    --color-on-secondary: #2d303b;
+    --color-surface-container-lowest: #0c0e14;
+    --color-surface-variant: #33343b;
+    --color-secondary-fixed: #e0e2f0;
+    --color-on-primary: #00228a;
+    --color-surface-tint: #b9c3ff;
+    --color-text-muted: #64748b;
+    --color-on-primary-fixed: #001257;
+    --color-on-error-container: #ffdad6;
+    --color-border-subtle: #2a2d3e;
+    --color-success-emerald: #22c55e;
+    --color-text-primary: #f1f5f9;
+    --color-on-tertiary-fixed-variant: #743500;
+    --color-surface-bright: #373940;
+    --color-on-surface: #e2e2eb;
+    --color-secondary-fixed-dim: #c4c6d3;
+    --color-on-surface-variant: #c4c5d7;
+    --color-tertiary-fixed: #ffdbc8;
+    --color-on-error: #690005;
+    --color-warning-orange: #f97316;
+  }
+  
+  body {
+    @apply bg-background text-on-surface font-body antialiased;
+    overflow-x: hidden;
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+    line-height: 1;
+  }
+}
+
+@layer components {
+  /* Scrollbar Styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #111319;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #2a2d3e;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #444654;
+  }
+
+  /* Glassmorphism Card */
+  .glass-card {
+    background: rgba(26, 29, 39, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid #2a2d3e;
+  }
+
+  /* Hero gradient */
+  .hero-gradient {
+    background: radial-gradient(circle at 50% 50%, rgba(185, 195, 255, 0.08) 0%, rgba(17, 19, 25, 0) 70%);
+  }
+
+  /* Active sidebar item left border */
+  .nav-active {
+    @apply text-primary bg-primary/5 border-l-2 border-primary;
+  }
+}
+
+@layer utilities {
+  /* Page fade-in animation */
+  .page-enter {
+    animation: pageEnter 0.25s ease-out forwards;
+  }
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Toast slide-in from the right */
+  .toast-enter {
+    animation: toastSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes toastSlide {
+    from { transform: translateX(110%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+
+  /* Pulse dot */
+  .pulse-dot {
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+}

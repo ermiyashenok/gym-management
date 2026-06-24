@@ -1,0 +1,62 @@
+const fs = require('fs');
+
+let css = `
+:root {
+  color-scheme: light;
+  --color-tertiary: #ffb68a;
+  --color-on-tertiary-container: #481e00;
+  --color-on-secondary-fixed: #181b25;
+  --color-secondary: #c4c6d3;
+  --color-inverse-primary: #2d50d9;
+  --color-outline-variant: #cbd5e1;
+  --color-error-container: #93000a;
+  --color-surface-dim: #f1f5f9;
+  --color-outline: #94a3b8;
+  --color-danger-red: #ef4444;
+  --color-on-tertiary-fixed: #321300;
+  --color-on-primary-container: #eff6ff;
+  --color-tertiary-fixed-dim: #ffb68a;
+  --color-primary-fixed-dim: #b9c3ff;
+  --color-secondary-container: #e2e8f0;
+  --color-on-secondary-container: #475569;
+  --color-surface-container: #f8fafc;
+  --color-on-background: #0f172a;
+  --color-error: #ffb4ab;
+  --color-surface-container-highest: #e2e8f0;
+  --color-on-secondary-fixed-variant: #444652;
+  --color-surface: #ffffff;
+  --color-primary-container: #dbeafe;
+  --color-inverse-on-surface: #f1f5f9;
+  --color-background: #ffffff;
+  --color-surface-container-high: #f1f5f9;
+  --color-on-primary-fixed-variant: #1e3a8a;
+  --color-surface-container-low: #f8fafc;
+  --color-primary-fixed: #bfdbfe;
+  --color-primary: #2563eb;
+  --color-inverse-surface: #0f172a;
+  --color-tertiary-container: #e1721e;
+  --color-on-tertiary: #522300;
+  --color-on-secondary: #0f172a;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-variant: #f1f5f9;
+  --color-secondary-fixed: #e0e2f0;
+  --color-on-primary: #ffffff;
+  --color-surface-tint: #2563eb;
+  --color-text-muted: #64748b;
+  --color-on-primary-fixed: #172554;
+  --color-on-error-container: #ffdad6;
+  --color-border-subtle: #e2e8f0;
+  --color-success-emerald: #16a34a;
+  --color-text-primary: #0f172a;
+  --color-on-tertiary-fixed-variant: #743500;
+  --color-surface-bright: #ffffff;
+  --color-on-surface: #0f172a;
+  --color-secondary-fixed-dim: #c4c6d3;
+  --color-on-surface-variant: #334155;
+  --color-tertiary-fixed: #ffdbc8;
+  --color-on-error: #690005;
+  --color-warning-orange: #f97316;
+}
+`;
+
+fs.writeFileSync('theme-vars-light.css', css);

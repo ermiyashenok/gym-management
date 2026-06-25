@@ -8,6 +8,7 @@ import {
   initialNotifications,
   initialSchedules,
   TODAY_STR,
+  TEST_USERS,
 } from '@/data/mockData'
 import { getMemberStatus, extendDate, genPaymentId, genMemberId } from '@/utils/helpers'
 
@@ -20,6 +21,7 @@ export const useStore = create(
       currentBranch: 'b1',   // branch_id or 'all'
 
       // ── Data ──
+      gyms:          [{ id: 'g1', name: 'GYM-SYS Franchise' }],
       branches:      initialBranches,
       trainers:      initialTrainers,
       members:       initialMembers,
@@ -29,6 +31,7 @@ export const useStore = create(
       schedules:     initialSchedules,
       amenities:     [],
       actionLogs:    [],
+      systemUsers:   TEST_USERS,
 
       // ── Toasts ──
       toasts: [],
@@ -49,6 +52,11 @@ export const useStore = create(
       },
 
       setCurrentBranch: (id) => set({ currentBranch: id }),
+
+      addSystemUser: (user) => {
+        set((s) => ({ systemUsers: [...s.systemUsers, user] }))
+        get().addToast('Success', `System account created for ${user.name}`)
+      },
 
       // ─────────────────────────────────────────────────────────────────────
       // MEMBERS
@@ -255,11 +263,18 @@ export const useStore = create(
       },
 
       // ─────────────────────────────────────────────────────────────────────
-      // BRANCHES
+      // GYMS & BRANCHES
       // ─────────────────────────────────────────────────────────────────────
+      addGym: (name) => {
+        const newGym = { id: 'g_' + Date.now(), name }
+        set((s) => ({ gyms: [...(s.gyms || [{ id: 'g1', name: 'GYM-SYS Franchise' }]), newGym] }))
+        get().addToast('Success', `Gym Profile "${name}" created.`)
+      },
+
       addBranch: (data) => {
         const newBranch = {
           id:           'b_' + Date.now(),
+          gym_id:       data.gym_id || 'g1',
           name:         data.name,
           address:      data.address,
           phone:        data.phone,
@@ -273,7 +288,7 @@ export const useStore = create(
           daily_rate: parseFloat(data.daily_rate || 0),
         }
         set((s) => ({ branches: [...s.branches, newBranch] }))
-        get().addToast('Success', `Branch "${newBranch.name}" created.`)
+        get().addToast('Success', `Branch "${newBranch.name}" created under gym.`)
       },
 
       updateBranch: (data) => {
@@ -423,11 +438,12 @@ export const useStore = create(
       },
     }),
     {
-      name: 'gymflow-store',
+      name: 'gymsys-store',
       // Only persist data, not ephemeral state like toasts
       partialize: (s) => ({
         currentUser:   s.currentUser,
         currentBranch: s.currentBranch,
+        gyms:          s.gyms || [{ id: 'g1', name: 'GYM-SYS Franchise' }],
         branches:      s.branches,
         trainers:      s.trainers,
         members:       s.members,
@@ -436,6 +452,7 @@ export const useStore = create(
         schedules:     s.schedules,
         amenities:     s.amenities,
         actionLogs:    s.actionLogs || [],
+        systemUsers:   s.systemUsers || TEST_USERS,
       }),
     }
   )

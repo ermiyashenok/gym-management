@@ -9,9 +9,11 @@ import ToastContainer from '@/components/ui/ToastContainer'
 // Public pages
 import LandingPage from '@/pages/LandingPage'
 import LoginPage   from '@/pages/LoginPage'
+import AdminLoginPage from '@/pages/AdminLoginPage'
 
 // App pages
 import DashboardPage      from '@/pages/DashboardPage'
+import OwnerDashboardPage from '@/pages/OwnerDashboardPage'
 import MembersPage        from '@/pages/MembersPage'
 import AddMemberPage      from '@/pages/AddMemberPage'
 import TrainersPage       from '@/pages/TrainersPage'
@@ -22,6 +24,7 @@ import NotificationsPage  from '@/pages/NotificationsPage'
 import BranchesPage       from '@/pages/BranchesPage'
 import SettingsPage       from '@/pages/SettingsPage'
 import AmenitiesPage      from '@/pages/AmenitiesPage'
+import AdminPortalPage    from '@/pages/AdminPortalPage'
 
 // Modals (app-wide)
 import MemberDetailsDrawer  from '@/components/modals/MemberDetailsDrawer'
@@ -38,8 +41,18 @@ function RequireAuth({ children }) {
 // ── Role guard (optional) ─────────────────────────────────────────────────────
 function RequireRole({ roles, children }) {
   const currentUser = useStore((s) => s.currentUser)
-  if (!roles.includes(currentUser?.role)) return <Navigate to="/app/dashboard" replace />
+  const role = currentUser?.role
+  if (!roles.includes(role)) {
+    return <Navigate to={role === 'Owner' ? '/app/owner-dashboard' : '/app/dashboard'} replace />
+  }
   return children
+}
+
+// ── Owner-aware default redirect ──────────────────────────────────────
+function DefaultRedirect() {
+  const currentUser = useStore((s) => s.currentUser)
+  if (currentUser?.role === 'Owner') return <Navigate to="owner-dashboard" replace />
+  return <Navigate to="dashboard" replace />
 }
 
 export default function App() {
@@ -83,6 +96,7 @@ export default function App() {
         {/* ── Public ── */}
         <Route path="/"      element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />}   />
+        <Route path="/admin-login" element={<AdminLoginPage />} />
 
         {/* ── Protected App ── */}
         <Route path="/app" element={
@@ -91,7 +105,7 @@ export default function App() {
           </RequireAuth>
         }>
           {/* Default redirect */}
-          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route index element={<DefaultRedirect />} />
 
           {/* Dashboard */}
           <Route path="dashboard" element={
@@ -101,9 +115,18 @@ export default function App() {
             />
           } />
 
-          {/* Members */}
+          {/* Owner Dashboard */}
+          <Route path="owner-dashboard" element={
+            <RequireRole roles={['Owner']}>
+              <OwnerDashboardPage />
+            </RequireRole>
+          } />
+
+          {/* Members — Owner excluded */}
           <Route path="members" element={
-            <MembersPage onSelectMember={setSelectedMember} />
+            <RequireRole roles={['SuperAdmin', 'Manager', 'Staff', 'Trainer']}>
+              <MembersPage onSelectMember={setSelectedMember} />
+            </RequireRole>
           } />
           <Route path="members/add" element={
             <RequireRole roles={['SuperAdmin', 'Staff']}>
@@ -130,7 +153,7 @@ export default function App() {
 
           {/* Branches */}
           <Route path="branches" element={
-            <RequireRole roles={['SuperAdmin']}>
+            <RequireRole roles={['SuperAdmin', 'Manager']}>
               <BranchesPage />
             </RequireRole>
           } />
@@ -139,6 +162,13 @@ export default function App() {
           <Route path="settings" element={
             <RequireRole roles={['SuperAdmin']}>
               <SettingsPage />
+            </RequireRole>
+          } />
+
+          {/* Admin Portal */}
+          <Route path="admin-portal" element={
+            <RequireRole roles={['SuperAdmin']}>
+              <AdminPortalPage />
             </RequireRole>
           } />
 

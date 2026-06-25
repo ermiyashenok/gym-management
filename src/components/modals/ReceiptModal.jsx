@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { useStore } from '@/store/useStore'
 import { GhostButton } from '@/components/ui'
 
@@ -10,8 +11,8 @@ export default function ReceiptModal({ payment, onClose }) {
   const member = members.find((m) => m.id === payment.member_id)
   const branch = member ? branches.find((b) => b.id === member.branch_id) : null
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       <div className="relative w-full max-w-sm bg-white text-gray-900 rounded-xl shadow-2xl overflow-hidden page-enter">
@@ -19,8 +20,8 @@ export default function ReceiptModal({ payment, onClose }) {
         <div id="receipt-print" className="p-6 space-y-5">
           {/* Header */}
           <div className="text-center">
-            <h3 className="font-headline text-xl font-bold uppercase tracking-wider">GymFlow Pro</h3>
-            <p className="text-sm text-gray-500 mt-0.5">{branch?.name ?? 'GymFlow Downtown'}</p>
+            <h3 className="font-headline text-xl font-bold uppercase tracking-wider">GYM-SYS</h3>
+            <p className="text-sm text-gray-500 mt-0.5">{branch?.name ?? 'GYM-SYS'}</p>
             <p className="text-xs text-gray-400">{branch?.address}</p>
             <div className="border-b border-dashed border-gray-300 my-4" />
             <h4 className="text-xs font-bold uppercase tracking-widest text-gray-600">Official Payment Receipt</h4>
@@ -68,7 +69,8 @@ export default function ReceiptModal({ payment, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

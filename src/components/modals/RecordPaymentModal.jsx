@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useStore } from '@/store/useStore'
 import { PLAN_PRICES } from '@/utils/helpers'
 import { FormField, Input, Select, PrimaryButton, GhostButton } from '@/components/ui'
@@ -48,8 +49,8 @@ export default function RecordPaymentModal({ member, onClose }) {
     onClose()
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       <form
@@ -118,6 +119,7 @@ export default function RecordPaymentModal({ member, onClose }) {
           </PrimaryButton>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body
   )
 }

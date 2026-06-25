@@ -10,11 +10,11 @@ export const initialBranches = [
 
 // ─── Trainers ─────────────────────────────────────────────────────────────────
 export const initialTrainers = [
-  { id: 't1', branch_id: 'b1', first_name: 'Marcus', last_name: 'Thorne',    phone: '(555) 012-3456', email: 'marcus@gymflow.com',  specialization: 'Weight Training',     experience_yrs: 8, status: 'Active'   },
-  { id: 't2', branch_id: 'b1', first_name: 'Elena',  last_name: 'Rodriguez', phone: '(555) 012-9876', email: 'elena@gymflow.com',   specialization: 'Yoga & Mobility',     experience_yrs: 5, status: 'Active'   },
-  { id: 't3', branch_id: 'b2', first_name: 'David',  last_name: 'Chen',      phone: '(555) 013-4422', email: 'david@gymflow.com',   specialization: 'Powerlifting',        experience_yrs: 6, status: 'On Break' },
-  { id: 't4', branch_id: 'b3', first_name: 'Sarah',  last_name: 'Miller',    phone: '(555) 014-7711', email: 'sarah.m@gymflow.com', specialization: 'Functional Fitness',  experience_yrs: 4, status: 'Active'   },
-  { id: 't5', branch_id: 'b1', first_name: 'Julian', last_name: 'Vance',     phone: '(555) 015-8833', email: 'julian@gymflow.com',  specialization: 'Bio-Mechanics',       experience_yrs: 3, status: 'Offline'  },
+  { id: 't1', branch_id: 'b1', first_name: 'Marcus', last_name: 'Thorne',    phone: '(555) 012-3456', email: 'marcus@gym-sys.com',  specialization: 'Weight Training',     experience_yrs: 8, status: 'Active'   },
+  { id: 't2', branch_id: 'b1', first_name: 'Elena',  last_name: 'Rodriguez', phone: '(555) 012-9876', email: 'elena@gym-sys.com',   specialization: 'Yoga & Mobility',     experience_yrs: 5, status: 'Active'   },
+  { id: 't3', branch_id: 'b2', first_name: 'David',  last_name: 'Chen',      phone: '(555) 013-4422', email: 'david@gym-sys.com',   specialization: 'Powerlifting',        experience_yrs: 6, status: 'On Break' },
+  { id: 't4', branch_id: 'b3', first_name: 'Sarah',  last_name: 'Miller',    phone: '(555) 014-7711', email: 'sarah.m@gym-sys.com', specialization: 'Functional Fitness',  experience_yrs: 4, status: 'Active'   },
+  { id: 't5', branch_id: 'b1', first_name: 'Julian', last_name: 'Vance',     phone: '(555) 015-8833', email: 'julian@gym-sys.com',  specialization: 'Bio-Mechanics',       experience_yrs: 3, status: 'Offline'  },
 ]
 
 // ─── Members ──────────────────────────────────────────────────────────────────
@@ -59,8 +59,9 @@ export const initialSchedules = [
 
 // ─── Auth Users ───────────────────────────────────────────────────────────────
 export const TEST_USERS = [
-  { email: 'admin@gymflow.com',   password: '123', name: 'Alex Rivera',   role: 'SuperAdmin', branch_id: null, trainer_id: null },
-  { email: 'manager@gymflow.com', password: '123', name: 'Sophia Patel',  role: 'Manager',    branch_id: 'b1', trainer_id: null },
-  { email: 'staff@gymflow.com',   password: '123', name: 'Sarah Chen',    role: 'Staff',      branch_id: 'b1', trainer_id: null },
-  { email: 'trainer@gymflow.com', password: '123', name: 'Marcus Thorne', role: 'Trainer',    branch_id: 'b1', trainer_id: 't1' },
+  { email: 'admin@gym-sys.com',   password: '123', name: 'Alex Rivera',   role: 'SuperAdmin', branch_id: null, trainer_id: null },
+  { email: 'owner@gym-sys.com',   password: '123', name: 'Omar Keita',    role: 'Owner',      branch_id: null, trainer_id: null },
+  { email: 'manager@gym-sys.com', password: '123', name: 'Sophia Patel',  role: 'Manager',    branch_id: 'b1', trainer_id: null },
+  { email: 'staff@gym-sys.com',   password: '123', name: 'Sarah Chen',    role: 'Staff',      branch_id: 'b1', trainer_id: null },
+  { email: 'trainer@gym-sys.com', password: '123', name: 'Marcus Thorne', role: 'Trainer',    branch_id: 'b1', trainer_id: 't1' },
 ]

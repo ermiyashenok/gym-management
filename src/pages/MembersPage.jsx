@@ -42,7 +42,7 @@ export default function MembersPage({ onSelectMember }) {
     const rows   = filtered.map((m) =>
       `"${m.id}","${m.first_name} ${m.last_name}","${m.phone}","${m.email ?? ''}","${m.plan}","${m.join_date}","${m.renewal_date}","${getMemberStatus(m.renewal_date)}"`
     ).join('\n')
-    downloadCSV(`GymFlow_Members_${currentBranch}_${TODAY_STR}.csv`, header + rows)
+    downloadCSV(`GYMSYS_Members_${currentBranch}_${TODAY_STR}.csv`, header + rows)
   }
 
   return (

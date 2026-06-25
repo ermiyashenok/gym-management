@@ -16,7 +16,7 @@ export default function PaymentsPage() {
   const [paymentModal,  setPaymentModal]  = useState(null)  // null | 'select' | member obj
   const [receiptModal,  setReceiptModal]  = useState(null)  // null | payment obj
 
-  const canRecord = currentUser?.role !== 'Manager' && currentUser?.role !== 'Trainer'
+  const canRecord = currentUser?.role !== 'Manager' && currentUser?.role !== 'Trainer' && currentUser?.role !== 'Owner'
 
   // Branch-filtered payments
   const filtered = useMemo(() =>
@@ -54,7 +54,7 @@ export default function PaymentsPage() {
       else if (p.member_id === 'Trainer_Admission') name = 'Trainer Fee'
       return `"${p.id}","${name}","${p.amount}","${p.method}","${p.plan_label}","${p.recorded_by}","${p.paid_at}"`
     }).join('\n')
-    downloadCSV(`GymFlow_Payments_${currentBranch}_${TODAY_STR}.csv`, header + rows)
+    downloadCSV(`GYMSYS_Payments_${currentBranch}_${TODAY_STR}.csv`, header + rows)
   }
 
   return (

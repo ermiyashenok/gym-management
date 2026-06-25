@@ -6,6 +6,9 @@ export default function AmenitiesPage() {
   const amenities = useStore((s) => s.amenities)
   const addAmenity = useStore((s) => s.addAmenity)
   const sellAmenity = useStore((s) => s.sellAmenity)
+  const deleteAmenity = useStore((s) => s.deleteAmenity)
+  const currentUser = useStore((s) => s.currentUser)
+  const isOwner = currentUser?.role === 'Owner'
   const [isAdding, setIsAdding] = useState(false)
   const [form, setForm] = useState({ name: '', category: 'Supplement', price: '', stock: '', image: '' })
 
@@ -32,7 +35,7 @@ export default function AmenitiesPage() {
           <h1 className="font-headline text-2xl font-bold text-text-primary">Shop & Amenities</h1>
           <p className="text-text-muted text-xs mt-1">Manage gym products, supplements, and merchandise.</p>
         </div>
-        {!isAdding && (
+        {!isAdding && !isOwner && (
           <PrimaryButton onClick={() => setIsAdding(true)} className="flex items-center gap-2">
             <span className="material-symbols-outlined text-sm">add</span> Add Item
           </PrimaryButton>
@@ -87,8 +90,19 @@ export default function AmenitiesPage() {
               ) : (
                 <span className="material-symbols-outlined text-4xl text-text-muted">shopping_bag</span>
               )}
-              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-white uppercase tracking-wider">
-                {item.category}
+              <div className="absolute top-2 right-2 flex gap-1">
+                <div className="bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-white uppercase tracking-wider">
+                  {item.category}
+                </div>
+                {!isOwner && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); if(confirm('Remove this item?')) deleteAmenity(item.id); }}
+                  className="bg-danger-red/80 hover:bg-danger-red text-white backdrop-blur-md w-6 h-6 flex items-center justify-center rounded transition-colors"
+                  title="Delete Item"
+                >
+                  <span className="material-symbols-outlined text-xs">delete</span>
+                </button>
+                )}
               </div>
             </div>
             <div className="p-4">
@@ -97,9 +111,11 @@ export default function AmenitiesPage() {
                 <span className="text-primary font-bold">Birr {item.price}</span>
                 <span className="text-text-muted">{item.stock} in stock</span>
               </div>
-              <PrimaryButton onClick={() => sellAmenity(item)} className="w-full text-xs py-1.5" disabled={item.stock <= 0}>
-                {item.stock > 0 ? 'Sell Item' : 'Out of Stock'}
-              </PrimaryButton>
+              {!isOwner && (
+                <PrimaryButton onClick={() => sellAmenity(item)} className="w-full text-xs py-1.5" disabled={item.stock <= 0}>
+                  {item.stock > 0 ? 'Sell Item' : 'Out of Stock'}
+                </PrimaryButton>
+              )}
             </div>
           </Card>
         ))}

@@ -6,13 +6,17 @@ import { clsx } from 'clsx'
 
 export default function BranchesPage() {
   const branches     = useStore((s) => s.branches)
+  const gyms         = useStore((s) => s.gyms)
   const members      = useStore((s) => s.members)
   const trainers     = useStore((s) => s.trainers)
-  const addBranch    = useStore((s) => s.addBranch)
   const updateBranch = useStore((s) => s.updateBranch)
   const deleteBranch = useStore((s) => s.deleteBranch)
+  const currentUser  = useStore((s) => s.currentUser)
+  const isSuperAdmin = currentUser?.role === 'SuperAdmin'
 
-  const emptyForm = { name: '', address: '', phone: '', manager_name: '', opening_time: '06:00 AM', closing_time: '10:00 PM', lunch_start: '12:00 PM', lunch_end: '02:00 PM', monthly_rate: '', quarterly_rate: '', daily_rate: '' }
+  const visibleBranches = isSuperAdmin ? branches : branches.filter(b => b.id === currentUser?.branch_id)
+
+  const emptyForm = { gym_id: gyms[0]?.id || 'g1', name: '', address: '', phone: '', manager_name: '', opening_time: '06:00 AM', closing_time: '10:00 PM', lunch_start: '12:00 PM', lunch_end: '02:00 PM', monthly_rate: '', quarterly_rate: '', daily_rate: '' }
   const [form,      setForm]      = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
 
@@ -31,7 +35,7 @@ export default function BranchesPage() {
 
   const triggerEdit = (b) => {
     setEditingId(b.id)
-    setForm({ name: b.name, address: b.address, phone: b.phone, manager_name: b.manager_name, opening_time: b.opening_time || '06:00 AM', closing_time: b.closing_time || '10:00 PM', lunch_start: b.lunch_start || '12:00 PM', lunch_end: b.lunch_end || '02:00 PM', monthly_rate: b.monthly_rate || '', quarterly_rate: b.quarterly_rate || '', daily_rate: b.daily_rate || '' })
+    setForm({ gym_id: b.gym_id || 'g1', name: b.name, address: b.address, phone: b.phone, manager_name: b.manager_name, opening_time: b.opening_time || '06:00 AM', closing_time: b.closing_time || '10:00 PM', lunch_start: b.lunch_start || '12:00 PM', lunch_end: b.lunch_end || '02:00 PM', monthly_rate: b.monthly_rate || '', quarterly_rate: b.quarterly_rate || '', daily_rate: b.daily_rate || '' })
   }
 
   const handleDelete = (b) => {
@@ -55,12 +59,20 @@ export default function BranchesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* ── Create / Edit form ── */}
+        {(isSuperAdmin || editingId) && (
         <Card className="p-5 space-y-4">
           <h2 className="font-mono text-[10px] text-text-muted uppercase tracking-widest border-b border-border-subtle pb-3">
             {editingId ? 'Edit Branch' : 'Add New Branch'}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isSuperAdmin && (
+              <FormField label="Assign to Gym *">
+                <Select required value={form.gym_id} onChange={(e) => setField('gym_id', e.target.value)}>
+                  {gyms.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                </Select>
+              </FormField>
+            )}
             <FormField label="Branch Name *">
               <Input required value={form.name} onChange={(e) => setField('name', e.target.value)} placeholder="e.g. Uptown Fitness" />
             </FormField>
@@ -121,12 +133,13 @@ export default function BranchesPage() {
             </div>
           </form>
         </Card>
+        )}
 
         {/* ── Branches list ── */}
-        <div className="lg:col-span-2 space-y-4">
-          {branches.length === 0 ? (
+        <div className={`space-y-4 ${isSuperAdmin || editingId ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+          {visibleBranches.length === 0 ? (
             <Card className="p-12 text-center text-text-muted text-sm">No branches configured yet.</Card>
-          ) : branches.map((b) => {
+          ) : visibleBranches.map((b) => {
             const stats = branchStats(b.id)
             const isEditing = editingId === b.id
             return (
@@ -160,6 +173,7 @@ export default function BranchesPage() {
                     >
                       <span className="material-symbols-outlined text-lg">edit</span>
                     </button>
+                    {isSuperAdmin && (
                     <button
                       onClick={() => handleDelete(b)}
                       className="p-1.5 rounded-lg text-text-muted hover:text-danger-red hover:bg-danger-red/10 transition-colors"
@@ -167,6 +181,7 @@ export default function BranchesPage() {
                     >
                       <span className="material-symbols-outlined text-lg">delete</span>
                     </button>
+                    )}
                   </div>
                 </div>
 

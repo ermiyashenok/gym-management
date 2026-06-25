@@ -5,15 +5,17 @@ import { clsx } from 'clsx'
 import { Avatar } from '@/components/ui'
 
 const ALL_NAV = [
-  { to: '/app/dashboard',    label: 'Dashboard',    icon: 'dashboard',          roles: ['SuperAdmin', 'Manager', 'Staff'] },
-  { to: '/app/members', label: 'Members', icon: 'group', roles: ['SuperAdmin', 'Manager', 'Staff', 'Trainer'] },
-  { to: '/app/trainers', label: 'Trainers', icon: 'fitness_center', roles: ['SuperAdmin', 'Manager', 'Staff'] },
-  { to: '/app/schedule',     label: 'Schedule',     icon: 'calendar_today',     roles: ['SuperAdmin', 'Manager', 'Staff', 'Trainer'] },
-  { to: '/app/payments',     label: 'Payments',     icon: 'payments',           roles: ['SuperAdmin', 'Manager', 'Staff'] },
-  { to: '/app/amenities',    label: 'Amenities',    icon: 'local_mall',         roles: ['SuperAdmin', 'Staff'] },
-  { to: '/app/notifications',label: 'Notifications',icon: 'notifications',      roles: ['SuperAdmin', 'Manager', 'Staff', 'Trainer'], badge: true },
-  { to: '/app/branches',     label: 'Branches',     icon: 'domain',             roles: ['SuperAdmin'] },
-  { to: '/app/settings',     label: 'Settings',     icon: 'settings',           roles: ['SuperAdmin'] },
+  { to: '/app/dashboard',      label: 'Dashboard',    icon: 'dashboard',            roles: ['SuperAdmin', 'Manager', 'Staff'] },
+  { to: '/app/owner-dashboard',label: 'Owner Hub',    icon: 'monitoring',           roles: ['Owner'] },
+  { to: '/app/members',        label: 'Members',      icon: 'group',                roles: ['SuperAdmin', 'Manager', 'Staff', 'Trainer'] },
+  { to: '/app/trainers',       label: 'Trainers',     icon: 'fitness_center',       roles: ['SuperAdmin', 'Manager', 'Staff'] },
+  { to: '/app/schedule',       label: 'Schedule',     icon: 'calendar_today',       roles: ['SuperAdmin', 'Manager', 'Staff', 'Trainer'] },
+  { to: '/app/payments',       label: 'Payments',     icon: 'payments',             roles: ['SuperAdmin', 'Manager', 'Staff', 'Owner'] },
+  { to: '/app/amenities',      label: 'Amenities',    icon: 'local_mall',           roles: ['SuperAdmin', 'Staff', 'Owner'] },
+  { to: '/app/notifications',  label: 'Notifications',icon: 'notifications',        roles: ['SuperAdmin', 'Manager', 'Staff', 'Trainer'], badge: true },
+  { to: '/app/branches',       label: 'Branches',     icon: 'domain',               roles: ['SuperAdmin', 'Manager'] },
+  { to: '/app/settings',       label: 'Settings',     icon: 'settings',             roles: ['SuperAdmin'] },
+  { to: '/app/admin-portal',   label: 'Admin Portal', icon: 'admin_panel_settings', roles: ['SuperAdmin'] },
 ]
 
 export default function Sidebar() {
@@ -51,7 +53,7 @@ export default function Sidebar() {
           <span className="material-symbols-outlined text-3xl text-primary shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
           {!collapsed && (
             <div className="page-enter">
-              <p className="font-headline text-base font-bold text-primary leading-none">GymFlow Pro</p>
+              <p className="font-headline text-base font-bold text-primary leading-none">GYM-SYS</p>
               <p className="font-mono text-[9px] text-text-muted uppercase tracking-widest mt-0.5">Elite System</p>
             </div>
           )}

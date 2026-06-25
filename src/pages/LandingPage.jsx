@@ -11,7 +11,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-8">
             <span className="font-headline text-xl font-bold text-primary flex items-center gap-2">
               <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
-              GymFlow Pro
+              GYM-SYS
             </span>
             <div className="hidden md:flex gap-6">
               {['Features', 'Pricing', 'Solutions'].map((item) => (
@@ -22,8 +22,8 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/login')} className="px-4 py-2 text-on-surface font-mono text-xs hover:text-primary transition-colors">Log In</button>
-            <button onClick={() => navigate('/login')} className="px-5 py-2 bg-primary text-on-primary font-mono text-xs rounded-lg hover:opacity-90 active:scale-95 transition-all font-bold">Get Started</button>
+            <button onClick={() => navigate('/admin-login')} className="px-4 py-2 text-on-surface font-mono text-xs hover:text-primary transition-colors font-bold">Admin Login</button>
+            <button onClick={() => navigate('/login')} className="px-5 py-2 bg-primary text-on-primary font-mono text-xs rounded-lg hover:opacity-90 active:scale-95 transition-all font-bold">Gym Login</button>
           </div>
         </div>
       </nav>
@@ -63,13 +63,13 @@ export default function LandingPage() {
 
             <div className="flex items-center gap-4 pt-2">
               <div className="flex -space-x-2">
-                {['JR', 'SM', 'AR'].map((init, i) => (
+                {[""].map((init, i) => (
                   <div key={i} className="w-9 h-9 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
                     {init}
                   </div>
                 ))}
               </div>
-              <span className="text-text-muted text-sm">Trusted by 500+ Elite Gyms</span>
+
             </div>
           </div>
 
@@ -129,48 +129,42 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-24 bg-background">
+      {/* Workflow Section */}
+      <section id="workflow" className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="font-headline text-4xl font-bold mb-4 text-text-primary">Simple, Scalable Pricing</h2>
-            <p className="text-text-muted">Transparent plans, no hidden fees.</p>
+            <h2 className="font-headline text-4xl font-bold mb-4 text-text-primary">Transform Your Workflow</h2>
+            <p className="text-text-muted">Designed specifically to eliminate administrative bottlenecks and accelerate gym growth.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-            {PLANS.map((plan) => (
-              <div key={plan.name} className={`bg-surface border rounded-xl p-8 flex flex-col ${plan.highlighted ? 'border-2 border-primary scale-105 shadow-2xl shadow-primary/10 relative' : 'border-border-subtle hover:border-outline transition-colors'}`}>
-                {plan.highlighted && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-1 bg-primary text-on-primary rounded-full text-[10px] font-bold uppercase tracking-widest">
-                    Most Popular
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              {[
+                { title: 'Centralized Multi-Gym Management', desc: 'Manage multiple physical locations from a single dashboard. System Admins can instantly deploy new gyms and assign local managers, ensuring secure data isolation per facility.' },
+                { title: 'Zero-Friction Renewals', desc: 'Automated status tracking instantly flags expiring and overdue memberships, while the built-in Point of Sale handles membership fees and amenity sales.' },
+                { title: 'Empowered Trainers', desc: 'No more overlapping schedules. Trainers manage their own calendars, while managers oversee stipends and attendance seamlessly.' }
+              ].map((benefit, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center shrink-0">
+                    {i + 1}
                   </div>
-                )}
-                <div className="mb-8">
-                  <h3 className={`font-headline text-xl font-bold mb-2 ${plan.highlighted ? 'text-primary' : 'text-text-primary'}`}>{plan.name}</h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-text-primary">{plan.price}</span>
-                    <span className="text-text-muted text-sm">/mo</span>
+                  <div>
+                    <h3 className="font-headline text-lg font-bold text-text-primary mb-1">{benefit.title}</h3>
+                    <p className="text-sm text-text-muted leading-relaxed">{benefit.desc}</p>
                   </div>
                 </div>
-                <ul className="space-y-3 mb-10 flex-grow text-sm text-text-muted">
-                  {plan.features.map((f) => (
-                    <li key={f} className={`flex items-center gap-2 ${plan.highlighted ? 'text-on-surface' : ''}`}>
-                      <span className={`material-symbols-outlined text-base ${plan.highlighted ? 'text-primary' : 'text-success-emerald'}`}>check_circle</span>
-                      {f}
-                    </li>
+              ))}
+            </div>
+            <div className="relative p-6 bg-surface-container-low border border-border-subtle rounded-2xl shadow-xl">
+              <div className="aspect-[4/3] rounded-lg border border-border-subtle bg-background flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
+                <span className="material-symbols-outlined text-6xl text-primary/40">query_stats</span>
+                <div className="absolute bottom-4 left-4 right-4 h-24 bg-surface rounded shadow border border-border-subtle p-3 flex gap-2 items-end">
+                  {[30, 45, 60, 50, 75, 90, 100].map((h, i) => (
+                    <div key={i} className="flex-1 bg-primary/80 rounded-sm" style={{ height: `${h}%` }} />
                   ))}
-                </ul>
-                <button
-                  onClick={() => navigate('/login')}
-                  className={`w-full py-3 rounded-lg font-mono font-bold text-xs transition-all ${
-                    plan.highlighted
-                      ? 'bg-primary text-on-primary shadow-lg shadow-primary/20 hover:opacity-90'
-                      : 'border border-border-subtle text-on-surface hover:bg-surface-container-high'
-                  }`}
-                >
-                  {plan.cta}
-                </button>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
@@ -178,8 +172,8 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-surface-container-lowest border-t border-border-subtle py-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-text-muted">
-          <span className="font-headline font-bold text-primary text-base">GymFlow Pro</span>
-          <span>© 2026 GymFlow Pro. All rights reserved.</span>
+          <span className="font-headline font-bold text-primary text-base">GYM-SYS</span>
+          <span>© 2026 GYM-SYS. All rights reserved.</span>
           <div className="flex gap-6">
             <a href="#" className="hover:text-primary transition-colors">Privacy</a>
             <a href="#" className="hover:text-primary transition-colors">Terms</a>
@@ -192,13 +186,8 @@ export default function LandingPage() {
 }
 
 const FEATURES = [
-  { title: 'Member Management',   icon: 'group',          iconBg: 'bg-primary/10',  iconColor: 'text-primary',  hoverBg: 'bg-primary',  hoverColor: 'text-on-primary', desc: 'Track the full member lifecycle — enrollment, renewals, attendance, and health profiles with real-time status flags.' },
-  { title: 'Automated Billing',   icon: 'payments',       iconBg: 'bg-tertiary/10', iconColor: 'text-tertiary', hoverBg: 'bg-tertiary', hoverColor: 'text-on-tertiary', desc: 'Record payments in seconds, auto-extend memberships, generate print-ready receipts and trigger dunning alerts.' },
-  { title: 'Trainer Timetable',   icon: 'calendar_today', iconBg: 'bg-primary/10',  iconColor: 'text-primary',  hoverBg: 'bg-primary',  hoverColor: 'text-on-primary', desc: 'Schedule weekly training slots on an interactive calendar per trainer and assign members with one click.' },
+  { title: 'Member Management', icon: 'group', iconBg: 'bg-primary/10', iconColor: 'text-primary', hoverBg: 'bg-primary', hoverColor: 'text-on-primary', desc: 'Track the full member lifecycle — enrollment, renewals, attendance, and health profiles with real-time status flags.' },
+  { title: 'Automated Billing', icon: 'payments', iconBg: 'bg-tertiary/10', iconColor: 'text-tertiary', hoverBg: 'bg-tertiary', hoverColor: 'text-on-tertiary', desc: 'Record payments in seconds, auto-extend memberships, generate print-ready receipts and trigger dunning alerts.' },
+  { title: 'Trainer Timetable', icon: 'calendar_today', iconBg: 'bg-primary/10', iconColor: 'text-primary', hoverBg: 'bg-primary', hoverColor: 'text-on-primary', desc: 'Schedule weekly training slots on an interactive calendar per trainer and assign members with one click.' },
 ]
 
-const PLANS = [
-  { name: 'Basic', price: 'Birr 99', highlighted: false, cta: 'Get Started', features: ['Up to 250 Members', '1 Branch Location', 'Automated Statuses', 'Email Support'] },
-  { name: 'Pro',   price: 'Birr 199', highlighted: true, cta: 'Start Free Trial', features: ['Unlimited Members', 'Multiple Branches', 'Trainer Timetable', 'Advanced Analytics', 'Priority Support'] },
-  { name: 'Enterprise', price: 'Birr 499', highlighted: false, cta: 'Contact Sales', features: ['Dedicated Hosting', 'Custom API Integration', '24/7 Priority Support', 'SLA & Uptime Guarantee'] },
-]

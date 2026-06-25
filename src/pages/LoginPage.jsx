@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/store/useStore'
-import { TEST_USERS } from '@/data/mockData'
 import { Input, PrimaryButton } from '@/components/ui'
 
 export default function LoginPage() {
   const navigate  = useNavigate()
   const login     = useStore((s) => s.login)
   const addToast  = useStore((s) => s.addToast)
+  const systemUsers = useStore((s) => s.systemUsers)
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
@@ -15,10 +15,16 @@ export default function LoginPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    const user = TEST_USERS.find((u) => u.email === email && u.password === password)
+    const user = systemUsers.find((u) => u.email === email && u.password === password)
     if (user) {
+      if (user.role === 'SuperAdmin') {
+        setError('System Administrators must log in via the Admin Portal.')
+        return
+      }
       login(user)
-      navigate(user.role === 'Trainer' ? '/app/schedule' : '/app/dashboard')
+      if (user.role === 'Trainer') navigate('/app/schedule')
+      else if (user.role === 'Owner') navigate('/app/owner-dashboard')
+      else navigate('/app/dashboard')
     } else {
       setError('Invalid credentials. Use a preset below.')
       addToast('Error', 'Login failed — invalid email or password.')
@@ -47,9 +53,11 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <span className="font-headline text-3xl font-bold text-primary flex items-center justify-center gap-2">
             <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
-            GymFlow Pro
+            GYM-SYS
           </span>
-          <p className="text-text-muted text-sm mt-2">Enter credentials to access the management portal.</p>
+          <p className="text-text-muted text-sm mt-2">
+            Enter credentials to access your gym's management portal.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -60,7 +68,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@gymflow.com"
+              placeholder="you@gym-sys.com"
             />
           </div>
           <div>
@@ -92,7 +100,7 @@ export default function LoginPage() {
             Quick Login — Testing Profiles
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {TEST_USERS.map((user) => (
+            {systemUsers.filter(u => u.role !== 'SuperAdmin').map((user) => (
               <button
                 key={user.email}
                 type="button"

@@ -16,7 +16,7 @@ export default function PaymentsPage() {
   const [paymentModal,  setPaymentModal]  = useState(null)  // null | 'select' | member obj
   const [receiptModal,  setReceiptModal]  = useState(null)  // null | payment obj
 
-  const canRecord = currentUser?.role !== 'Manager' && currentUser?.role !== 'Trainer' && currentUser?.role !== 'Owner'
+  const canRecord = currentUser?.role === 'Staff'
 
   // Branch-filtered payments
   const filtered = useMemo(() =>

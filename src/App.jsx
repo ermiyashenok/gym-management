@@ -24,6 +24,7 @@ import NotificationsPage  from '@/pages/NotificationsPage'
 import BranchesPage       from '@/pages/BranchesPage'
 import SettingsPage       from '@/pages/SettingsPage'
 import AmenitiesPage      from '@/pages/AmenitiesPage'
+import ExpensesPage       from '@/pages/ExpensesPage'
 import AdminPortalPage    from '@/pages/AdminPortalPage'
 
 // Modals (app-wide)
@@ -48,10 +49,11 @@ function RequireRole({ roles, children }) {
   return children
 }
 
-// ── Owner-aware default redirect ──────────────────────────────────────
+// ── Owner/Admin-aware default redirect ──────────────────────────────────────
 function DefaultRedirect() {
   const currentUser = useStore((s) => s.currentUser)
   if (currentUser?.role === 'Owner') return <Navigate to="owner-dashboard" replace />
+  if (currentUser?.role === 'SuperAdmin') return <Navigate to="admin-portal" replace />
   return <Navigate to="dashboard" replace />
 }
 
@@ -137,7 +139,7 @@ export default function App() {
           {/* Trainers */}
           <Route path="trainers" element={<TrainersPage />} />
           <Route path="trainers/add" element={
-            <RequireRole roles={['SuperAdmin', 'Staff']}>
+            <RequireRole roles={['Manager', 'Staff']}>
               <AddTrainerPage />
             </RequireRole>
           } />
@@ -174,8 +176,15 @@ export default function App() {
 
           {/* Amenities */}
           <Route path="amenities" element={
-            <RequireRole roles={['SuperAdmin', 'Staff']}>
+            <RequireRole roles={['Staff', 'Owner']}>
               <AmenitiesPage />
+            </RequireRole>
+          } />
+
+          {/* Expenses */}
+          <Route path="expenses" element={
+            <RequireRole roles={['Manager', 'Staff', 'Owner']}>
+              <ExpensesPage />
             </RequireRole>
           } />
 

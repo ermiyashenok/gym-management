@@ -15,6 +15,7 @@ export default function Header() {
   const addToast         = useStore((s) => s.addToast)
 
   const [notifOpen, setNotifOpen] = useState(false)
+  const [selectedNotif, setSelectedNotif] = useState(null)
   const notifRef = useRef(null)
   const navigate = useNavigate()
 
@@ -46,7 +47,7 @@ export default function Header() {
         <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
           storefront
         </span>
-        {currentUser?.role === 'SuperAdmin' ? (
+        {currentUser?.role === 'SuperAdmin' || currentUser?.role === 'Owner' ? (
           <select
             value={currentBranch}
             onChange={(e) => {
@@ -67,15 +68,24 @@ export default function Header() {
 
       {/* Right — actions */}
       <div className="flex items-center gap-3">
-        {/* Quick payment button */}
-        {(currentUser?.role === 'SuperAdmin' || currentUser?.role === 'Staff') && (
-          <button
-            onClick={() => navigate('/app/payments')}
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold rounded-lg hover:bg-primary/20 transition-all"
-          >
-            <span className="material-symbols-outlined text-sm">payments</span>
-            Record Payment
-          </button>
+        {/* Quick buttons */}
+        {currentUser?.role === 'Staff' && (
+          <div className="hidden md:flex items-center gap-2">
+            <button
+              onClick={() => navigate('/app/expenses')}
+              className="flex items-center gap-2 px-3 py-1.5 bg-danger-red/10 border border-danger-red/20 text-danger-red text-xs font-bold rounded-lg hover:bg-danger-red/20 transition-all"
+            >
+              <span className="material-symbols-outlined text-sm">receipt_long</span>
+              Record Expense
+            </button>
+            <button
+              onClick={() => navigate('/app/payments')}
+              className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold rounded-lg hover:bg-primary/20 transition-all"
+            >
+              <span className="material-symbols-outlined text-sm">payments</span>
+              Record Payment
+            </button>
+          </div>
         )}
 
         {/* Theme Toggle */}
@@ -88,6 +98,7 @@ export default function Header() {
         </button>
 
         {/* Notification bell */}
+        {currentUser?.role !== 'SuperAdmin' && (
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setNotifOpen((o) => !o)}
@@ -120,7 +131,8 @@ export default function Header() {
                 ) : branchNotifs.slice(0, 10).map((n) => (
                   <div
                     key={n.id}
-                    className={clsx('p-3.5 flex gap-3 hover:bg-white/5 transition-colors', !n.is_read && 'bg-primary/5')}
+                    onClick={() => { setSelectedNotif(n); markNotifRead(n.id); setNotifOpen(false); }}
+                    className={clsx('p-3.5 flex gap-3 hover:bg-white/5 transition-colors cursor-pointer', !n.is_read && 'bg-primary/5')}
                   >
                     <span className={clsx('material-symbols-outlined text-lg shrink-0 mt-0.5', notifColor(n.type))}>
                       {notifIcon(n.type)}
@@ -131,11 +143,6 @@ export default function Header() {
                         {new Date(n.created_at).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' })}
                       </p>
                     </div>
-                    {!n.is_read && (
-                      <button onClick={() => markNotifRead(n.id)} title="Mark read" className="self-center">
-                        <span className="material-symbols-outlined text-sm text-primary">done</span>
-                      </button>
-                    )}
                   </div>
                 ))}
               </div>
@@ -151,10 +158,33 @@ export default function Header() {
             </div>
           )}
         </div>
+        )}
 
         <div className="h-5 w-px bg-border-subtle" />
         <span className="text-xs text-text-muted font-medium hidden sm:block">{currentUser?.name}</span>
       </div>
+
+      {/* Selected Notification Detail Modal */}
+      {selectedNotif && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-surface border border-border-subtle p-6 rounded-xl w-full max-w-md shadow-2xl relative">
+            <button onClick={() => setSelectedNotif(null)} className="absolute top-4 right-4 text-text-muted hover:text-text-primary transition-colors">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <h2 className="font-headline text-lg font-bold mb-4 flex items-center gap-2">
+               <span className={clsx('material-symbols-outlined', notifColor(selectedNotif.type))}>{notifIcon(selectedNotif.type)}</span>
+               {selectedNotif.type} Alert
+            </h2>
+            <div className="bg-surface-container-low border border-border-subtle p-4 rounded-lg mb-4">
+              <p className="text-sm text-text-primary">{selectedNotif.message}</p>
+            </div>
+            <div className="flex justify-between items-center text-xs text-text-muted">
+              <span>{new Date(selectedNotif.created_at).toLocaleString()}</span>
+              <button onClick={() => setSelectedNotif(null)} className="text-primary font-bold hover:underline">Close Window</button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   )
 }

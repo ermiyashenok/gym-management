@@ -30,6 +30,7 @@ export const useStore = create(
       schedules:     initialSchedules,
       schedules:     initialSchedules,
       amenities:     [],
+      expenses:      [],
       actionLogs:    [],
       systemUsers:   TEST_USERS,
 
@@ -248,6 +249,18 @@ export const useStore = create(
           }
           return { schedules: [...s.schedules, { trainer_id: trainerId, sessions: [{ day, time, member_id: memberId }] }] }
         })
+        
+        const notif = {
+          id:         'n_sched_' + Date.now(),
+          type:       'Info',
+          message:    `New session scheduled on ${day} at ${time}.`,
+          member_id:  memberId,
+          branch_id:  get().currentBranch,
+          is_read:    false,
+          created_at: new Date().toISOString(),
+        }
+        set((s) => ({ notifications: [notif, ...s.notifications] }))
+        
         get().addToast('Success', 'Session scheduled successfully.')
       },
 
@@ -269,6 +282,11 @@ export const useStore = create(
         const newGym = { id: 'g_' + Date.now(), name }
         set((s) => ({ gyms: [...(s.gyms || [{ id: 'g1', name: 'GYM-SYS Franchise' }]), newGym] }))
         get().addToast('Success', `Gym Profile "${name}" created.`)
+      },
+
+      deleteGym: (id) => {
+        set((s) => ({ gyms: s.gyms.filter((g) => g.id !== id) }))
+        get().addToast('Warning', 'Gym profile removed.')
       },
 
       addBranch: (data) => {
@@ -309,6 +327,7 @@ export const useStore = create(
       addAmenity: (data) => {
         const newAmenity = {
           id: 'a_' + Date.now(),
+          branch_id: data.branch_id || get().currentBranch === 'all' ? (get().branches[0]?.id || 'b1') : get().currentBranch,
           name: data.name,
           category: data.category,
           price: parseFloat(data.price),
@@ -350,6 +369,23 @@ export const useStore = create(
       deleteAmenity: (id) => {
         set((s) => ({ amenities: s.amenities.filter((a) => a.id !== id) }))
         get().addToast('Warning', 'Amenity removed.')
+      },
+
+      // ─────────────────────────────────────────────────────────────────────
+      // EXPENSES
+      // ─────────────────────────────────────────────────────────────────────
+      addExpense: (data) => {
+        const newExpense = {
+          id: 'exp_' + Date.now(),
+          branch_id: get().currentBranch === 'all' ? (get().branches[0]?.id || 'b1') : get().currentBranch,
+          type: data.type,
+          reason: data.reason,
+          amount: parseFloat(data.amount),
+          date: new Date().toISOString(),
+          recorded_by: get().currentUser?.name ?? 'System',
+        }
+        set((s) => ({ expenses: [newExpense, ...(s.expenses || [])] }))
+        get().addToast('Success', `Recorded expense of Birr ${newExpense.amount}.`)
       },
 
       // ─────────────────────────────────────────────────────────────────────
@@ -451,6 +487,7 @@ export const useStore = create(
         notifications: s.notifications,
         schedules:     s.schedules,
         amenities:     s.amenities,
+        expenses:      s.expenses || [],
         actionLogs:    s.actionLogs || [],
         systemUsers:   s.systemUsers || TEST_USERS,
       }),

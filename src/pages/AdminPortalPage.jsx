@@ -8,22 +8,11 @@ export default function AdminPortalPage() {
   const gyms = useStore((s) => s.gyms)
   const branches = useStore((s) => s.branches)
   const systemUsers = useStore((s) => s.systemUsers)
-  const addGym = useStore((s) => s.addGym)
   const addSystemUser = useStore((s) => s.addSystemUser)
   const setCurrentBranch = useStore((s) => s.setCurrentBranch)
-  
-  const [isAddingGym, setIsAddingGym] = useState(false)
-  const [gymName, setGymName] = useState('')
-
+  const deleteGym = useStore((s) => s.deleteGym)
   const [isAddingUser, setIsAddingUser] = useState(false)
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'Manager', branch_id: branches[0]?.id || '' })
-
-  const handleCreateGym = (e) => {
-    e.preventDefault()
-    addGym(gymName)
-    setGymName('')
-    setIsAddingGym(false)
-  }
 
   const handleCreateUser = (e) => {
     e.preventDefault()
@@ -69,19 +58,7 @@ export default function AdminPortalPage() {
               <span className="material-symbols-outlined text-primary">domain</span>
               Gyms & Branches
             </h2>
-            <PrimaryButton onClick={() => setIsAddingGym(!isAddingGym)} className="text-xs py-1.5 px-3">
-              {isAddingGym ? 'Cancel' : '+ New Gym'}
-            </PrimaryButton>
           </div>
-
-          {isAddingGym && (
-            <Card className="p-4 bg-surface-container-lowest border-primary/30">
-              <form onSubmit={handleCreateGym} className="space-y-3">
-                <FormField label="Gym Name *"><Input required value={gymName} onChange={e => setGymName(e.target.value)} placeholder="e.g. Elite Fitness Franchise" /></FormField>
-                <PrimaryButton type="submit" className="w-full text-xs">Create Gym Profile</PrimaryButton>
-              </form>
-            </Card>
-          )}
 
           <div className="grid gap-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
             {(gyms || []).map(g => {
@@ -90,9 +67,14 @@ export default function AdminPortalPage() {
                 <Card key={g.id} className="p-4 border border-border-subtle bg-surface-container-low overflow-hidden">
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="font-bold text-text-primary text-lg">{g.name}</h3>
-                    <GhostButton onClick={() => navigate('/app/branches')} className="text-xs py-1 px-2 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">add</span> Add Branch
-                    </GhostButton>
+                    <div className="flex gap-2">
+                      <GhostButton onClick={() => navigate('/app/branches')} className="text-xs py-1 px-2 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">add</span> Add Branch
+                      </GhostButton>
+                      <button onClick={() => { if(window.confirm('Delete this gym completely?')) deleteGym(g.id); }} className="text-danger-red hover:bg-danger-red/10 px-2 py-1 rounded transition-colors flex items-center justify-center">
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2 pl-4 border-l-2 border-border-subtle">
                     {gymBranches.length === 0 ? (

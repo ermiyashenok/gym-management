@@ -15,6 +15,7 @@ export default function MembersPage({ onSelectMember }) {
   const [search,        setSearch]        = useState('')
   const [statusFilter,  setStatusFilter]  = useState('All')
   const [trainerFilter, setTrainerFilter] = useState('All')
+  const [showDailyEntryModal, setShowDailyEntryModal] = useState(false)
 
   const isTrainer = currentUser?.role === 'Trainer'
   const canCreate = currentUser?.role === 'SuperAdmin' || currentUser?.role === 'Staff'
@@ -59,7 +60,7 @@ export default function MembersPage({ onSelectMember }) {
           </GhostButton>
           {canCreate && (
             <>
-              <PrimaryButton onClick={() => recordDailyEntry(currentBranch)} className="flex items-center gap-2 bg-surface-container-highest text-primary hover:bg-surface-variant">
+              <PrimaryButton onClick={() => setShowDailyEntryModal(true)} className="flex items-center gap-2 bg-surface-container-highest text-primary hover:bg-surface-variant">
                 <span className="material-symbols-outlined text-sm">local_activity</span> Daily Entry
               </PrimaryButton>
               <PrimaryButton onClick={() => navigate('/app/members/add')} className="flex items-center gap-2">
@@ -148,6 +149,20 @@ export default function MembersPage({ onSelectMember }) {
           </div>
         )}
       </Card>
+
+      {showDailyEntryModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-surface border border-border-subtle p-6 rounded-xl w-full max-w-xs shadow-2xl relative text-center">
+            <span className="material-symbols-outlined text-primary text-4xl mb-3">local_activity</span>
+            <h2 className="font-headline text-lg font-bold mb-2">Record Daily Entry?</h2>
+            <p className="text-sm text-text-muted mb-6">Are you sure you want to record a daily entry for a non-member?</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setShowDailyEntryModal(false)} className="px-4 py-2 text-sm text-text-muted hover:text-text-primary border border-border-subtle rounded-lg">Cancel</button>
+              <button onClick={() => { recordDailyEntry(currentBranch); setShowDailyEntryModal(false); }} className="px-4 py-2 text-sm bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

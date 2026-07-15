@@ -9,13 +9,6 @@ export default function SettingsPage() {
   const undoAction             = useStore((s) => s.undoAction)
   const addToast               = useStore((s) => s.addToast)
 
-  const clearStorage = () => {
-    if (window.confirm('Reset all data to factory defaults? This cannot be undone.')) {
-      localStorage.clear()
-      window.location.reload()
-    }
-  }
-
   return (
     <div className="space-y-6 max-w-2xl mx-auto page-enter">
       <div>
@@ -52,18 +45,6 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      {/* Webhook / API */}
-      <Card className="p-5">
-        <SectionHeader icon="key" title="API & Webhooks" />
-        <p className="text-text-muted text-xs mt-2 mb-4">
-          Manage billing webhooks and external integration credentials.
-        </p>
-        <div className="space-y-3">
-          <SecretRow label="Live Webhook Secret" value="whsec_09a27d2bb8180c441ff_gymflow" onCopy={() => addToast('Info', 'Secret copied to clipboard.')} />
-          <SecretRow label="API Key (Read-only)" value="gf_live_sk_xxxxxxxxxxxxxxxxxxxxxxx" onCopy={() => addToast('Info', 'API key copied to clipboard.')} />
-        </div>
-      </Card>
-
       {/* Logs / Undo */}
       <Card className="p-5">
         <SectionHeader icon="history" title="Action Logs & Undo" />
@@ -89,26 +70,6 @@ export default function SettingsPage() {
           ))}
         </div>
       </Card>
-
-      {/* Danger zone */}
-      <Card className="p-5 border-danger-red/20">
-        <SectionHeader icon="warning" title="Danger Zone" iconColor="text-danger-red" />
-        <p className="text-text-muted text-xs mt-2 mb-4">
-          Irreversible actions. Proceed with caution.
-        </p>
-        <div className="bg-danger-red/5 border border-danger-red/20 rounded-lg p-4 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-danger-red">Reset to Factory Defaults</p>
-            <p className="text-[10px] text-text-muted mt-0.5">Clears all localStorage data and reloads with seed data.</p>
-          </div>
-          <button
-            onClick={clearStorage}
-            className="shrink-0 px-4 py-2 bg-danger-red/10 border border-danger-red/30 text-danger-red text-xs font-bold rounded-lg hover:bg-danger-red/20 transition-colors"
-          >
-            Reset Data
-          </button>
-        </div>
-      </Card>
     </div>
   )
 }
@@ -127,28 +88,6 @@ function InfoRow({ label, value }) {
     <div>
       <p className="font-mono text-[9px] text-text-muted uppercase tracking-wider mb-0.5">{label}</p>
       <p className="text-sm font-semibold text-text-primary">{value}</p>
-    </div>
-  )
-}
-
-function SecretRow({ label, value, onCopy }) {
-  return (
-    <div>
-      <p className="font-mono text-[10px] text-text-muted uppercase tracking-wider mb-1.5">{label}</p>
-      <div className="flex gap-2">
-        <input
-          type="password"
-          value={value}
-          readOnly
-          className="flex-1 bg-background border border-border-subtle rounded-lg px-3 py-2 text-xs text-text-muted font-mono focus:outline-none"
-        />
-        <button
-          onClick={onCopy}
-          className="px-3 py-2 bg-surface-container-high border border-border-subtle rounded-lg text-xs font-bold text-text-primary hover:bg-surface-variant transition-colors"
-        >
-          Copy
-        </button>
-      </div>
     </div>
   )
 }

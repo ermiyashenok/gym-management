@@ -5,14 +5,15 @@ import { clsx } from 'clsx'
 import { Avatar } from '@/components/ui'
 
 const ALL_NAV = [
-  { to: '/app/dashboard',      label: 'Dashboard',    icon: 'dashboard',            roles: ['SuperAdmin', 'Manager', 'Staff'] },
+  { to: '/app/dashboard',      label: 'Dashboard',    icon: 'dashboard',            roles: ['Manager', 'Staff'] },
   { to: '/app/owner-dashboard',label: 'Owner Hub',    icon: 'monitoring',           roles: ['Owner'] },
-  { to: '/app/members',        label: 'Members',      icon: 'group',                roles: ['SuperAdmin', 'Manager', 'Staff', 'Trainer'] },
-  { to: '/app/trainers',       label: 'Trainers',     icon: 'fitness_center',       roles: ['SuperAdmin', 'Manager', 'Staff'] },
-  { to: '/app/schedule',       label: 'Schedule',     icon: 'calendar_today',       roles: ['SuperAdmin', 'Manager', 'Staff', 'Trainer'] },
+  { to: '/app/members',        label: 'Members',      icon: 'group',                roles: ['Manager', 'Staff', 'Trainer'] },
+  { to: '/app/trainers',       label: 'Trainers',     icon: 'fitness_center',       roles: ['Manager', 'Staff'] },
+  { to: '/app/schedule',       label: 'Schedule',     icon: 'calendar_today',       roles: ['Manager', 'Staff', 'Trainer'] },
   { to: '/app/payments',       label: 'Payments',     icon: 'payments',             roles: ['SuperAdmin', 'Manager', 'Staff', 'Owner'] },
-  { to: '/app/amenities',      label: 'Amenities',    icon: 'local_mall',           roles: ['SuperAdmin', 'Staff', 'Owner'] },
-  { to: '/app/notifications',  label: 'Notifications',icon: 'notifications',        roles: ['SuperAdmin', 'Manager', 'Staff', 'Trainer'], badge: true },
+  { to: '/app/expenses',       label: 'Expenses',     icon: 'receipt_long',         roles: ['Manager', 'Staff', 'Owner'] },
+  { to: '/app/amenities',      label: 'Amenities',    icon: 'local_mall',           roles: ['Staff', 'Owner'] },
+  { to: '/app/notifications',  label: 'Notifications',icon: 'notifications',        roles: ['Manager', 'Staff', 'Trainer'], badge: true },
   { to: '/app/branches',       label: 'Branches',     icon: 'domain',               roles: ['SuperAdmin', 'Manager'] },
   { to: '/app/settings',       label: 'Settings',     icon: 'settings',             roles: ['SuperAdmin'] },
   { to: '/app/admin-portal',   label: 'Admin Portal', icon: 'admin_panel_settings', roles: ['SuperAdmin'] },
@@ -21,6 +22,8 @@ const ALL_NAV = [
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [openMenus, setOpenMenus] = useState({})
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [showSignOutModal, setShowSignOutModal] = useState(false)
 
   const currentUser    = useStore((s) => s.currentUser)
   const notifications  = useStore((s) => s.notifications)
@@ -48,16 +51,16 @@ export default function Sidebar() {
       collapsed ? 'w-[68px] px-2' : 'w-60 px-4'
     )}>
       {/* Brand */}
-      <div className="flex items-center justify-between mb-8 px-1">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <span className="material-symbols-outlined text-3xl text-primary shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
-          {!collapsed && (
+      <div className={clsx("flex items-center mb-8 px-1", collapsed ? "justify-center" : "justify-between")}>
+        {!collapsed && (
+          <div className="flex items-center gap-2 overflow-hidden">
+            <span className="material-symbols-outlined text-3xl text-primary shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
             <div className="page-enter">
               <p className="font-headline text-base font-bold text-primary leading-none">GYM-SYS</p>
               <p className="font-mono text-[9px] text-text-muted uppercase tracking-widest mt-0.5">Elite System</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="p-1 rounded text-text-muted hover:text-primary transition-colors shrink-0"
@@ -186,10 +189,7 @@ export default function Sidebar() {
         )}
 
         <button
-          onClick={() => {
-            const newPass = window.prompt('Enter new password:')
-            if (newPass) useStore.getState().addToast('Success', 'Password updated successfully.')
-          }}
+          onClick={() => setShowPasswordModal(true)}
           className="w-full flex items-center gap-3 px-2.5 py-2 mb-1 rounded-lg text-text-muted hover:text-primary hover:bg-surface-container-high transition-colors"
         >
           <span className="material-symbols-outlined text-[20px] shrink-0">key</span>
@@ -197,13 +197,87 @@ export default function Sidebar() {
         </button>
 
         <button
-          onClick={handleLogout}
+          onClick={() => setShowSignOutModal(true)}
           className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-danger-red hover:bg-danger-red/10 transition-colors"
         >
           <span className="material-symbols-outlined text-[20px] shrink-0">logout</span>
           {!collapsed && <span className="font-body text-sm">Sign Out</span>}
         </button>
       </div>
+
+      {showPasswordModal && (
+        <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+      )}
+
+      {showSignOutModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-surface border border-border-subtle p-6 rounded-xl w-full max-w-xs shadow-2xl relative text-center">
+            <span className="material-symbols-outlined text-danger-red text-4xl mb-3">logout</span>
+            <h2 className="font-headline text-lg font-bold mb-2">Are you sure?</h2>
+            <p className="text-sm text-text-muted mb-6">Do you want to sign out of the system?</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setShowSignOutModal(false)} className="px-4 py-2 text-sm text-text-muted hover:text-text-primary border border-border-subtle rounded-lg">Cancel</button>
+              <button onClick={handleLogout} className="px-4 py-2 text-sm bg-danger-red text-white font-bold rounded-lg hover:bg-danger-red/90 transition-all">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
+  )
+}
+
+function ChangePasswordModal({ onClose }) {
+  const [oldPass, setOldPass] = useState('')
+  const [newPass, setNewPass] = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
+  const [error, setError] = useState('')
+  const addToast = useStore((s) => s.addToast)
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (newPass !== confirmPass) {
+      setError('Passwords do not match.')
+      return
+    }
+    if (newPass.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
+    // In a real app we'd verify oldPass and update DB
+    addToast('Success', 'Password updated successfully.')
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-surface border border-border-subtle p-6 rounded-xl w-full max-w-sm shadow-2xl relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-text-muted hover:text-text-primary transition-colors">
+          <span className="material-symbols-outlined">close</span>
+        </button>
+        <h2 className="font-headline text-lg font-bold mb-4 flex items-center gap-2">
+           <span className="material-symbols-outlined text-primary">key</span>
+           Change Password
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Current Password</label>
+            <input type="password" required value={oldPass} onChange={(e) => setOldPass(e.target.value)} className="w-full bg-background border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">New Password</label>
+            <input type="password" required value={newPass} onChange={(e) => setNewPass(e.target.value)} className="w-full bg-background border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Confirm New Password</label>
+            <input type="password" required value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} className="w-full bg-background border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary" />
+          </div>
+          {error && <p className="text-xs text-danger-red">{error}</p>}
+          <div className="flex gap-3 justify-end pt-2">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-text-muted hover:text-text-primary">Cancel</button>
+            <button type="submit" className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-all">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
   )
 }

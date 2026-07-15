@@ -34,7 +34,6 @@ export default function LandingPage() {
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
               <span className="w-2 h-2 rounded-full bg-primary pulse-dot" />
-              <span className="text-primary font-mono text-[10px] uppercase tracking-wider">The Professional Choice</span>
             </div>
 
             <h1 className="font-headline text-5xl md:text-6xl font-extrabold leading-tight tracking-tight text-text-primary">

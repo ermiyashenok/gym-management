@@ -11,9 +11,9 @@ export default function OwnerDashboardPage() {
   const gyms      = useStore((s) => s.gyms)
   const amenities = useStore((s) => s.amenities)
   const members   = useStore((s) => s.members)
+  const currentBranch = useStore((s) => s.currentBranch)
 
   const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'payments' | 'shop'
-  const [branchFilter, setBranchFilter] = useState('all')
 
   const now = new Date(TODAY_STR)
 
@@ -64,17 +64,17 @@ export default function OwnerDashboardPage() {
 
   // Filtered payments
   const filteredPayments = useMemo(() => {
-    if (branchFilter === 'all') return payments
+    if (currentBranch === 'all') return payments
     return payments.filter(p => {
       if (p.member_id === 'Amenity_Sale') return true
       if (p.member_id === 'Daily_Entry') {
-        const b = branches.find(b => b.id === branchFilter)
+        const b = branches.find(b => b.id === currentBranch)
         return b && p.plan_label?.includes(b.name)
       }
       const m = members.find(mem => mem.id === p.member_id)
-      return m?.branch_id === branchFilter
+      return m?.branch_id === currentBranch
     })
-  }, [payments, branchFilter, branches, members])
+  }, [payments, currentBranch, branches, members])
 
   // Sold amenities
   const amenitySales = useMemo(() =>
@@ -210,17 +210,6 @@ export default function OwnerDashboardPage() {
               {tab.label}
             </button>
           ))}
-          {/* Branch filter */}
-          <div className="ml-auto flex items-center gap-2 pb-2">
-            <select
-              value={branchFilter}
-              onChange={e => setBranchFilter(e.target.value)}
-              className="text-xs font-mono bg-surface border border-border-subtle rounded-lg px-3 py-1.5 text-text-primary focus:border-primary outline-none"
-            >
-              <option value="all">All Branches</option>
-              {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
-          </div>
         </div>
 
         {activeTab === 'payments' && (

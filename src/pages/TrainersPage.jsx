@@ -14,7 +14,7 @@ export default function TrainersPage() {
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
 
-  const canCreate = currentUser?.role === 'SuperAdmin'
+  const canCreate = currentUser?.role === 'SuperAdmin' || currentUser?.role === 'Staff' || currentUser?.role === 'Manager'
 
   // Count assigned members per trainer
   const memberCounts = useMemo(() => {

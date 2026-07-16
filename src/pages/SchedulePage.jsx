@@ -59,6 +59,10 @@ export default function SchedulePage() {
       addToast('Warning', 'Managers have read-only access to the schedule.')
       return
     }
+    if (selectedTrainer?.status !== 'Active') {
+      addToast('Error', `Cannot book sessions. Coach is currently ${selectedTrainer.status}.`)
+      return
+    }
     setBookingSlot({ trainer_id: selectedTrainerId, day, time })
   }
 
@@ -121,6 +125,24 @@ export default function SchedulePage() {
             </div>
           </Card>
 
+          {/* Trainer status warning banner */}
+          {selectedTrainer.status !== 'Active' && (
+            <div className="bg-warning-orange/10 border border-warning-orange/20 text-warning-orange rounded-xl px-5 py-3 flex items-center gap-3 text-xs">
+              <span className="material-symbols-outlined text-lg">warning</span>
+              <div>
+                <p className="font-bold">Coach {selectedTrainer.first_name} is currently {selectedTrainer.status}.</p>
+                <p className="text-[10px] opacity-90 mt-0.5">
+                  Availability status is set to {selectedTrainer.status}
+                  {selectedTrainer.unavailable_duration && selectedTrainer.unavailable_duration !== 'Custom Date'
+                    ? ` (${selectedTrainer.unavailable_duration})`
+                    : ''}
+                  {selectedTrainer.unavailable_until ? ` until ${selectedTrainer.unavailable_until}` : ''}.
+                  Booking new sessions is disabled.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Timetable grid */}
           <Card className="overflow-x-auto custom-scrollbar p-0">
             <table className="w-full border-collapse" style={{ minWidth: '860px' }}>
@@ -172,16 +194,17 @@ export default function SchedulePage() {
                           ) : (
                             <button
                               onClick={() => handleCellClick(dayIdx, slot)}
+                              disabled={selectedTrainer?.status !== 'Active'}
                               className={clsx(
-                                'w-full h-12 border border-dashed border-border-subtle rounded-lg flex items-center justify-center gap-1',
+                                'w-full h-12 border border-dashed rounded-lg flex items-center justify-center gap-1',
                                 'font-mono text-[10px] text-text-muted transition-all',
-                                canEdit
-                                  ? 'hover:border-primary/50 hover:text-primary hover:bg-primary/5 cursor-pointer'
-                                  : 'cursor-not-allowed opacity-40'
+                                canEdit && selectedTrainer?.status === 'Active'
+                                  ? 'border-border-subtle hover:border-primary/50 hover:text-primary hover:bg-primary/5 cursor-pointer'
+                                  : 'border-border-subtle/30 opacity-40 cursor-not-allowed bg-surface-container-highest/10'
                               )}
                             >
-                              {canEdit && <span className="material-symbols-outlined text-sm">add</span>}
-                              {canEdit ? 'Book' : 'Free'}
+                              {canEdit && selectedTrainer?.status === 'Active' && <span className="material-symbols-outlined text-sm">add</span>}
+                              {selectedTrainer?.status !== 'Active' ? 'Unavailable' : canEdit ? 'Book' : 'Free'}
                             </button>
                           )}
                         </td>

@@ -7,35 +7,42 @@ export default function LoginPage() {
   const navigate  = useNavigate()
   const login     = useStore((s) => s.login)
   const addToast  = useStore((s) => s.addToast)
-  const systemUsers = useStore((s) => s.systemUsers)
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState('')
+  const [loading,  setLoading]  = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const user = systemUsers.find((u) => u.email === email && u.password === password)
-    if (user) {
+    setError('')
+    setLoading(true)
+    try {
+      const user = await login(email, password)
       if (user.role === 'SuperAdmin') {
-        setError('System Administrators must log in via the Admin Portal.')
-        return
+        navigate('/app/admin-portal')
+      } else if (user.role === 'Trainer') {
+        navigate('/app/schedule')
+      } else if (user.role === 'Owner') {
+        navigate('/app/owner-dashboard')
+      } else {
+        navigate('/app/dashboard')
       }
-      login(user)
-      if (user.role === 'Trainer') navigate('/app/schedule')
-      else if (user.role === 'Owner') navigate('/app/owner-dashboard')
-      else navigate('/app/dashboard')
-    } else {
-      setError('Invalid credentials. Use a preset below.')
+    } catch (err) {
+      setError(err.message || 'Invalid credentials. Please try again.')
       addToast('Error', 'Login failed — invalid email or password.')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const fillPreset = (user) => {
-    setEmail(user.email)
-    setPassword(user.password)
-    setError('')
-  }
+  // Seeded accounts for quick testing — passwords match seed.sql
+  const presets = [
+    { name: 'Alex Rivera',   email: 'manager@gym-sys.com',  password: '123', role: 'Manager'    },
+    { name: 'Maria Santos',  email: 'staff@gym-sys.com',    password: '123', role: 'Staff'      },
+    { name: 'David Chen',    email: 'trainer@gym-sys.com',  password: '123', role: 'Trainer'    },
+    { name: 'Owner One',     email: 'owner@gym-sys.com',    password: '123', role: 'Owner'      },
+  ]
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6 relative">
@@ -74,7 +81,6 @@ export default function LoginPage() {
           <div>
             <div className="flex justify-between items-center mb-1.5">
               <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Password</label>
-              <a href="#" className="text-[10px] text-primary hover:underline">Forgot password?</a>
             </div>
             <Input
               type="password"
@@ -89,8 +95,8 @@ export default function LoginPage() {
             <p className="text-xs text-danger-red bg-danger-red/10 border border-danger-red/20 px-3 py-2 rounded-lg">{error}</p>
           )}
 
-          <PrimaryButton type="submit" className="w-full py-3 text-sm">
-            Authenticate
+          <PrimaryButton type="submit" className="w-full py-3 text-sm" disabled={loading}>
+            {loading ? 'Authenticating…' : 'Authenticate'}
           </PrimaryButton>
         </form>
 
@@ -100,11 +106,11 @@ export default function LoginPage() {
             Quick Login — Testing Profiles
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {systemUsers.filter(u => u.role !== 'SuperAdmin').map((user) => (
+            {presets.map((user) => (
               <button
                 key={user.email}
                 type="button"
-                onClick={() => fillPreset(user)}
+                onClick={() => { setEmail(user.email); setPassword(user.password); setError('') }}
                 className="p-3 text-left bg-surface-container-low border border-border-subtle rounded-lg hover:bg-surface-container-high hover:border-outline transition-all"
               >
                 <span className="block text-xs font-bold text-text-primary leading-tight">{user.name}</span>

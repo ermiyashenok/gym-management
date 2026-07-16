@@ -1,0 +1,198 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Removed Enums because DB uses text with CHECK constraints
+
+// ──────────────────────────────────────────
+// Models
+// ──────────────────────────────────────────
+
+model Gym {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  branches  Branch[]
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("gyms")
+}
+
+model Branch {
+  id            String         @id @default(uuid()) @db.Uuid
+  gymId         String         @map("gym_id") @db.Uuid
+  gym           Gym            @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  name          String
+  address       String?
+  phone         String?
+  managerName   String?        @map("manager_name")
+  openingTime   String         @default("06:00 AM") @map("opening_time")
+  closingTime   String         @default("10:00 PM") @map("closing_time")
+  lunchStart    String         @default("12:00 PM") @map("lunch_start")
+  lunchEnd      String         @default("02:00 PM") @map("lunch_end")
+  monthlyRate   Float          @default(0.00) @map("monthly_rate")
+  quarterlyRate Float          @default(0.00) @map("quarterly_rate")
+  dailyRate     Float          @default(0.00) @map("daily_rate")
+  trainers      Trainer[]
+  users         User[]
+  members       Member[]
+  amenities     Amenity[]
+  expenses      Expense[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("branches")
+}
+
+model Trainer {
+  id                  String     @id @default(uuid()) @db.Uuid
+  branchId            String     @map("branch_id") @db.Uuid
+  branch              Branch     @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  firstName           String     @map("first_name")
+  lastName            String     @map("last_name")
+  phone               String?
+  email               String?    @unique
+  specialization      String?
+  experienceYrs       Int        @default(0) @map("experience_yrs")
+  stipendPerMember    Float      @default(0.00) @map("stipend_per_member")
+  /// 'Active' | 'On Break' | 'Offline'
+  status              String     @default("Active")
+  unavailableUntil    DateTime?  @map("unavailable_until") @db.Date
+  unavailableDuration String?    @map("unavailable_duration")
+  users               User[]
+  members             Member[]
+  schedules           Schedule[]
+  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("trainers")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         String
+  branchId     String?  @map("branch_id") @db.Uuid
+  branch       Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  trainerId    String?  @map("trainer_id") @db.Uuid
+  trainer      Trainer? @relation(fields: [trainerId], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("users")
+}
+
+model Member {
+  id            String         @id // Custom format e.g. GF-10292
+  branchId      String         @map("branch_id") @db.Uuid
+  branch        Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  trainerId     String?        @map("trainer_id") @db.Uuid
+  trainer       Trainer?       @relation(fields: [trainerId], references: [id], onDelete: SetNull)
+  firstName     String         @map("first_name")
+  lastName      String         @map("last_name")
+  phone         String?
+  email         String?
+  dob           DateTime?      @db.Date
+  gender        String?
+  plan          String
+  joinDate      DateTime       @map("join_date") @db.Date
+  renewalDate   DateTime       @map("renewal_date") @db.Date
+  notes         String?
+  payments      Payment[]
+  schedules     Schedule[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("members")
+}
+
+model Payment {
+  id          String        @id @default(uuid()) @db.Uuid
+  memberId    String?       @map("member_id")
+  member      Member?       @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  paymentType String        @default("Membership") @map("payment_type")
+  amount      Float
+  currency    String        @default("Birr")
+  method      String        @default("Cash")
+  planLabel   String        @map("plan_label")
+  recordedBy  String        @map("recorded_by")
+  paidAt      DateTime      @default(now()) @map("paid_at") @db.Timestamptz
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("payments")
+}
+
+model Schedule {
+  id        String   @id @default(uuid()) @db.Uuid
+  trainerId String   @map("trainer_id") @db.Uuid
+  trainer   Trainer  @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  day       Int      // 0 = Sunday … 6 = Saturday
+  time      String   // e.g. "08:00 AM"
+  memberId  String   @map("member_id")
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([trainerId, day, time], name: "unique_trainer_time_slot")
+  @@map("schedules")
+}
+
+model Amenity {
+  id        String   @id @default(uuid()) @db.Uuid
+  branchId  String   @map("branch_id") @db.Uuid
+  branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  name      String
+  category  String?
+  price     Float
+  stock     Int      @default(0)
+  imageUrl  String?  @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("amenities")
+}
+
+model Expense {
+  id         String   @id @default(uuid()) @db.Uuid
+  branchId   String   @map("branch_id") @db.Uuid
+  branch     Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  type       String
+  reason     String?
+  amount     Float
+  date       DateTime @default(now()) @db.Timestamptz
+  recordedBy String   @map("recorded_by")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("expenses")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  type      String
+  message   String
+  memberId  String?          @map("member_id")
+  member    Member?          @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  branchId  String?          @map("branch_id") @db.Uuid
+  branch    Branch?          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("notifications")
+}
+
+model ActionLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userEmail String   @map("user_email")
+  action    String
+  snapshot  Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("action_logs")
+}

@@ -54,7 +54,7 @@ export default function Sidebar() {
       <div className={clsx("flex items-center mb-8 px-1", collapsed ? "justify-center" : "justify-between")}>
         {!collapsed && (
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="material-symbols-outlined text-3xl text-primary shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
+            <img src="/logo.png" alt="GYM-SYS Logo" className="w-8 h-8 object-contain shrink-0" />
             <div className="page-enter">
               <p className="font-headline text-base font-bold text-primary leading-none">GYM-SYS</p>
               <p className="font-mono text-[9px] text-text-muted uppercase tracking-widest mt-0.5">Elite System</p>

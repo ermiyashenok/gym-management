@@ -58,8 +58,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-surface border border-border-subtle rounded-xl p-8 shadow-2xl">
         {/* Brand */}
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-2">
+            <img src="/logo.png" alt="GYM-SYS Logo" className="h-16 w-auto object-contain drop-shadow-lg" />
+          </div>
           <span className="font-headline text-3xl font-bold text-primary flex items-center justify-center gap-2">
-            <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
             GYM-SYS
           </span>
           <p className="text-text-muted text-sm mt-2">

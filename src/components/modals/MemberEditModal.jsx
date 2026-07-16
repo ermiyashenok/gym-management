@@ -83,7 +83,9 @@ export default function MemberEditModal({ member, onClose }) {
             <Select value={form.trainer_id} onChange={(e) => set('trainer_id', e.target.value)}>
               <option value="">No Personal Coach</option>
               {trainers.map((t) => (
-                <option key={t.id} value={t.id}>{t.first_name} {t.last_name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.first_name} {t.last_name}{t.status !== 'Active' ? ` (${t.status})` : ''}
+                </option>
               ))}
             </Select>
           </FormField>

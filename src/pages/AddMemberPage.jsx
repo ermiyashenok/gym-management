@@ -111,7 +111,9 @@ export default function AddMemberPage() {
               <Select value={form.trainer_id} onChange={(e) => setField('trainer_id', e.target.value)}>
                 <option value="">No Assigned Trainer</option>
                 {trainers.filter(t => t.branch_id === form.branch_id).map((t) => (
-                  <option key={t.id} value={t.id}>{t.first_name} {t.last_name} — {t.specialization}</option>
+                  <option key={t.id} value={t.id}>
+                    {t.first_name} {t.last_name} — {t.specialization}{t.status !== 'Active' ? ` (${t.status})` : ''}
+                  </option>
                 ))}
               </Select>
             </FormField>

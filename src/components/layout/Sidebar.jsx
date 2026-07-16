@@ -8,7 +8,7 @@ const ALL_NAV = [
   { to: '/app/dashboard',      label: 'Dashboard',    icon: 'dashboard',            roles: ['Manager', 'Staff'] },
   { to: '/app/owner-dashboard',label: 'Owner Hub',    icon: 'monitoring',           roles: ['Owner'] },
   { to: '/app/members',        label: 'Members',      icon: 'group',                roles: ['Manager', 'Staff', 'Trainer'] },
-  { to: '/app/trainers',       label: 'Trainers',     icon: 'fitness_center',       roles: ['Manager', 'Staff'] },
+  { to: '/app/trainers',       label: 'Trainers',     icon: 'fitness_center',       roles: ['Manager', 'Staff', 'Trainer'] },
   { to: '/app/schedule',       label: 'Schedule',     icon: 'calendar_today',       roles: ['Manager', 'Staff', 'Trainer'] },
   { to: '/app/payments',       label: 'Payments',     icon: 'payments',             roles: ['SuperAdmin', 'Manager', 'Staff', 'Owner'] },
   { to: '/app/expenses',       label: 'Expenses',     icon: 'receipt_long',         roles: ['Manager', 'Staff', 'Owner'] },

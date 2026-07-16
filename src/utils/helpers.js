@@ -1,5 +1,5 @@
-/** Simulated "today" date — matches the mock data seed date */
-export const TODAY_STR = '2026-06-23'
+/** Today's date string in YYYY-MM-DD format */
+export const TODAY_STR = new Date().toISOString().split('T')[0]
 
 
 /**

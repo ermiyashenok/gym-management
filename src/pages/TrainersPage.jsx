@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/store/useStore'
 import { Card, SearchInput, Select, StatusBadge, PrimaryButton } from '@/components/ui'
+import TrainerStatusModal from '@/components/modals/TrainerStatusModal'
 import { clsx } from 'clsx'
 
 export default function TrainersPage() {
@@ -13,8 +14,18 @@ export default function TrainersPage() {
 
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [editingTrainer, setEditingTrainer] = useState(null)
 
   const canCreate = currentUser?.role === 'SuperAdmin' || currentUser?.role === 'Staff' || currentUser?.role === 'Manager'
+
+  const canEditStatus = (trainerId) => {
+    return (
+      currentUser?.role === 'SuperAdmin' ||
+      currentUser?.role === 'Staff' ||
+      currentUser?.role === 'Manager' ||
+      (currentUser?.role === 'Trainer' && currentUser?.trainer_id === trainerId)
+    )
+  }
 
   // Count assigned members per trainer
   const memberCounts = useMemo(() => {
@@ -91,14 +102,34 @@ export default function TrainersPage() {
                   <td className="px-6 py-4 text-sm font-semibold text-text-primary text-center">
                     {memberCounts[t.id] ?? 0}
                   </td>
-                  <td className="px-6 py-4"><StatusBadge status={t.status} /></td>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={t.status} />
+                    {t.status !== 'Active' && (t.unavailable_until || t.unavailable_duration) && (
+                      <p className="text-[10px] text-text-muted mt-1 font-mono leading-tight">
+                        {t.unavailable_duration && t.unavailable_duration !== 'Custom Date'
+                          ? `${t.unavailable_duration}`
+                          : ''}
+                        {t.unavailable_until ? ` until ${t.unavailable_until}` : ''}
+                      </p>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => navigate('/app/schedule')}
-                      className="px-3 py-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold rounded-lg hover:bg-primary/20 transition-all"
-                    >
-                      View Calendar
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      {canEditStatus(t.id) && (
+                        <button
+                          onClick={() => setEditingTrainer(t)}
+                          className="px-3 py-1.5 border border-border-subtle hover:bg-surface-container-high text-on-surface text-xs font-bold rounded-lg transition-all"
+                        >
+                          Edit Status
+                        </button>
+                      )}
+                      <button
+                        onClick={() => navigate('/app/schedule')}
+                        className="px-3 py-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold rounded-lg hover:bg-primary/20 transition-all"
+                      >
+                        View Calendar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -106,6 +137,13 @@ export default function TrainersPage() {
           </table>
         </div>
       </Card>
+
+      {editingTrainer && (
+        <TrainerStatusModal
+          trainer={editingTrainer}
+          onClose={() => setEditingTrainer(null)}
+        />
+      )}
     </div>
   )
 }

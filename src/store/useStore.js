@@ -1,16 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getMemberStatus } from '@/utils/helpers'
 import {
-  initialBranches,
-  initialTrainers,
-  initialMembers,
-  initialPayments,
-  initialNotifications,
-  initialSchedules,
-  TODAY_STR,
-  TEST_USERS,
-} from '@/data/mockData'
-import { getMemberStatus, extendDate, genPaymentId, genMemberId } from '@/utils/helpers'
+  authApi, gymsApi, branchesApi, trainersApi, membersApi,
+  paymentsApi, schedulesApi, amenitiesApi, expensesApi, notificationsApi,
+} from '@/api/api'
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 export const useStore = create(
@@ -18,355 +12,388 @@ export const useStore = create(
     (set, get) => ({
       // ── Auth ──
       currentUser:   null,
-      currentBranch: 'b1',   // branch_id or 'all'
+      currentBranch: 'all',   // branch_id or 'all'
 
-      // ── Data ──
-      gyms:          [{ id: 'g1', name: 'GYM-SYS Franchise' }],
-      branches:      initialBranches,
-      trainers:      initialTrainers,
-      members:       initialMembers,
-      payments:      initialPayments,
-      notifications: initialNotifications,
-      schedules:     initialSchedules,
-      schedules:     initialSchedules,
+      // ── Data (cached from API) ──
+      gyms:          [],
+      branches:      [],
+      trainers:      [],
+      members:       [],
+      payments:      [],
+      notifications: [],
+      schedules:     [],
       amenities:     [],
       expenses:      [],
       actionLogs:    [],
-      systemUsers:   TEST_USERS,
+      systemUsers:   [],
+
+      // ── Loading ──
+      loading: {},
 
       // ── Toasts ──
       toasts: [],
 
       // ─────────────────────────────────────────────────────────────────────
+      // INTERNAL HELPERS
+      // ─────────────────────────────────────────────────────────────────────
+      _setLoading: (key, val) =>
+        set((s) => ({ loading: { ...s.loading, [key]: val } })),
+
+      // ─────────────────────────────────────────────────────────────────────
       // AUTH
       // ─────────────────────────────────────────────────────────────────────
-      login: (user) => {
-        set({
-          currentUser:   user,
-          currentBranch: user.branch_id ?? 'all',
-        })
-        get().addToast('Success', `Logged in as ${user.name} (${user.role})`)
+      login: async (email, password) => {
+        get()._setLoading('login', true)
+        try {
+          const res = await authApi.login(email, password)
+          // res = { access_token, user: { id, email, name, role, branchId, trainerId } }
+          const userWithToken = {
+            ...res.user,
+            access_token: res.access_token,
+            branch_id:    res.user.branchId ?? null,
+            trainer_id:   res.user.trainerId ?? null,
+          }
+          set({
+            currentUser:   userWithToken,
+            currentBranch: userWithToken.branch_id ?? 'all',
+          })
+          get().addToast('Success', `Logged in as ${userWithToken.name} (${userWithToken.role})`)
+          // Kick off initial data load
+          await get().loadInitialData()
+          return userWithToken
+        } finally {
+          get()._setLoading('login', false)
+        }
       },
 
       logout: () => {
-        set({ currentUser: null, currentBranch: 'b1' })
+        set({
+          currentUser:   null,
+          currentBranch: 'all',
+          members:       [],
+          payments:      [],
+          trainers:      [],
+          branches:      [],
+          notifications: [],
+          schedules:     [],
+          amenities:     [],
+          expenses:      [],
+        })
       },
 
-      setCurrentBranch: (id) => set({ currentBranch: id }),
+      setCurrentBranch: async (id) => {
+        set({ currentBranch: id })
+        await get().refreshAll()
+      },
 
-      addSystemUser: (user) => {
-        set((s) => ({ systemUsers: [...s.systemUsers, user] }))
-        get().addToast('Success', `System account created for ${user.name}`)
+      // ─────────────────────────────────────────────────────────────────────
+      // INITIAL DATA LOAD
+      // ─────────────────────────────────────────────────────────────────────
+      loadInitialData: async () => {
+        await get().refreshAll()
+      },
+
+      refreshAll: async () => {
+        const branchId = get().currentBranch
+        try {
+          const [branches, trainers, members, payments, notifications, schedules, amenities, expenses] =
+            await Promise.all([
+              branchesApi.list().catch(() => []),
+              trainersApi.list(branchId !== 'all' ? branchId : undefined).catch(() => []),
+              membersApi.list(branchId).catch(() => []),
+              paymentsApi.list(branchId).catch(() => []),
+              notificationsApi.list(branchId).catch(() => []),
+              schedulesApi.list().catch(() => []),
+              amenitiesApi.list(branchId).catch(() => []),
+              expensesApi.list(branchId).catch(() => []),
+            ])
+          set({ branches, trainers, members, payments, notifications, schedules, amenities, expenses })
+        } catch (err) {
+          get().addToast('Error', 'Failed to refresh data from server.')
+        }
       },
 
       // ─────────────────────────────────────────────────────────────────────
       // MEMBERS
       // ─────────────────────────────────────────────────────────────────────
-      addMember: (data) => {
-        const newId = genMemberId()
-        const renewalDate = extendDate(data.start_date, data.plan)
-
-        const newMember = {
-          id:           newId,
-          branch_id:    data.branch_id,
-          trainer_id:   data.trainer_id || null,
-          first_name:   data.first_name,
-          last_name:    data.last_name,
-          phone:        data.phone,
-          email:        data.email || null,
-          dob:          data.dob || null,
-          gender:       data.gender,
-          plan:         data.plan,
-          join_date:    data.start_date,
-          renewal_date: renewalDate,
-          notes:        data.notes || '',
+      addMember: async (data) => {
+        try {
+          const member = await membersApi.create(data)
+          // Refresh members + payments + notifications after transaction
+          const [members, payments, notifications] = await Promise.all([
+            membersApi.list(get().currentBranch).catch(() => get().members),
+            paymentsApi.list(get().currentBranch).catch(() => get().payments),
+            notificationsApi.list(get().currentBranch).catch(() => get().notifications),
+          ])
+          set({ members, payments, notifications })
+          get().addToast('Success', `Registered ${member.firstName} and logged payment.`)
+          return member
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
         }
-
-        const newPayment = {
-          id:          genPaymentId(),
-          member_id:   newId,
-          amount:      parseFloat(data.payment_amount),
-          currency:    'Birr',
-          method:      data.payment_method,
-          plan_label:  `${data.plan} Plan Registration`,
-          recorded_by: get().currentUser?.name ?? 'System',
-          paid_at:     new Date().toISOString(),
-        }
-
-        const notif = {
-          id:         'n_' + Date.now(),
-          type:       'Success',
-          message:    `New member registered: ${newMember.first_name} ${newMember.last_name}`,
-          member_id:  newId,
-          branch_id:  data.branch_id,
-          is_read:    false,
-          created_at: new Date().toISOString(),
-        }
-
-        const snapshot = { members: get().members, payments: get().payments, notifications: get().notifications }
-
-        set((s) => ({
-          members:       [...s.members, newMember],
-          payments:      [newPayment, ...s.payments],
-          notifications: [notif, ...s.notifications],
-        }))
-
-        if (get().logAction) get().logAction(`Registered member ${newMember.first_name} ${newMember.last_name}`, snapshot)
-        get().addToast('Success', `Registered ${newMember.first_name} and logged payment.`)
       },
 
-      updateMember: (updated) => {
-        set((s) => ({
-          members: s.members.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)),
-        }))
-        get().addToast('Success', `Updated profile for ${updated.first_name} ${updated.last_name}`)
+      updateMember: async (data) => {
+        // data has id + changed fields (snake_case from UI forms)
+        const payload = {
+          first_name: data.first_name,
+          last_name:  data.last_name,
+          phone:      data.phone,
+          email:      data.email,
+          dob:        data.dob,
+          gender:     data.gender,
+          plan:       data.plan,
+          trainer_id: data.trainer_id,
+          notes:      data.notes,
+        }
+        try {
+          const updated = await membersApi.update(data.id, payload)
+          set((s) => ({
+            members: s.members.map((m) => m.id === data.id ? { ...m, ...updated } : m),
+          }))
+          get().addToast('Success', `Updated profile for ${updated.firstName ?? data.first_name}`)
+          return updated
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
+        }
       },
 
-      deleteMember: (id) => {
-        set((s) => ({
-          members:  s.members.filter((m) => m.id !== id),
-          payments: s.payments.filter((p) => p.member_id !== id),
-        }))
-        get().addToast('Warning', 'Member deleted from directory.')
+      deleteMember: async (id) => {
+        try {
+          await membersApi.delete(id)
+          set((s) => ({
+            members:  s.members.filter((m) => m.id !== id),
+            payments: s.payments.filter((p) => p.memberId !== id && p.member_id !== id),
+          }))
+          get().addToast('Warning', 'Member deleted from directory.')
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
+        }
       },
 
       // ─────────────────────────────────────────────────────────────────────
       // TRAINERS
       // ─────────────────────────────────────────────────────────────────────
-      addTrainer: (data) => {
-        const newTrainer = {
-          id:             't_' + Date.now(),
-          branch_id:      data.branch_id,
-          first_name:     data.first_name,
-          last_name:      data.last_name,
-          phone:          data.phone,
-          email:          data.email || null,
-          specialization: data.specialization,
-          experience_yrs: parseInt(data.experience_yrs) || 0,
-          stipend_per_member: parseFloat(data.stipend_per_member || 0),
-          status:         'Active',
+      addTrainer: async (data) => {
+        try {
+          const trainer = await trainersApi.create({
+            branch_id:          data.branch_id,
+            first_name:         data.first_name,
+            last_name:          data.last_name,
+            phone:              data.phone,
+            email:              data.email,
+            specialization:     data.specialization,
+            experience_yrs:     parseInt(data.experience_yrs) || 0,
+            stipend_per_member: parseFloat(data.stipend_per_member || 0),
+          })
+          set((s) => ({ trainers: [...s.trainers, trainer] }))
+          get().addToast('Success', `Added trainer ${trainer.firstName} ${trainer.lastName}`)
+          return trainer
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
         }
-
-        const snapshot = { trainers: get().trainers }
-
-        set((s) => ({
-          trainers: [...s.trainers, newTrainer],
-        }))
-
-        if (get().logAction) get().logAction(`Added trainer ${newTrainer.first_name} ${newTrainer.last_name}`, snapshot)
-        get().addToast('Success', `Added trainer ${newTrainer.first_name} ${newTrainer.last_name}`)
       },
 
-      updateTrainerStatus: (trainerId, status) => {
-        set((s) => ({
-          trainers: s.trainers.map((t) => (t.id === trainerId ? { ...t, status } : t)),
-        }))
-        get().addToast('Info', `Trainer status updated to "${status}"`)
+      updateTrainerStatus: async (trainerId, status, unavailableUntil = null, unavailableDuration = null) => {
+        try {
+          const updated = await trainersApi.updateStatus(trainerId, status, unavailableUntil, unavailableDuration)
+          set((s) => ({
+            trainers: s.trainers.map((t) => t.id === trainerId ? { ...t, ...updated } : t),
+          }))
+          get().addToast('Info', `Trainer status updated to "${status}"`)
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
+        }
       },
 
       // ─────────────────────────────────────────────────────────────────────
       // PAYMENTS
       // ─────────────────────────────────────────────────────────────────────
-      recordPayment: (data) => {
-        const { members, currentUser } = get()
-        const member = members.find((m) => m.id === data.member_id)
-        if (!member) return
-
-        // Extend renewal from today if already overdue, otherwise from current expiry
-        const base    = new Date(member.renewal_date) > new Date(TODAY_STR) ? member.renewal_date : TODAY_STR
-        const newDate = extendDate(base, data.plan_duration)
-
-        const newPayment = {
-          id:          genPaymentId(),
-          member_id:   member.id,
-          amount:      parseFloat(data.amount),
-          currency:    'Birr',
-          method:      data.method,
-          plan_label:  data.plan_label,
-          recorded_by: currentUser?.name ?? 'System',
-          paid_at:     new Date().toISOString(),
+      recordPayment: async (data) => {
+        // data: { member_id, plan_duration ('Monthly'|'Quarterly'|'Annual'), amount, method }
+        try {
+          const result = await paymentsApi.renew({
+            member_id:      data.member_id,
+            plan:           data.plan_duration,
+            payment_amount: parseFloat(data.amount),
+            payment_method: data.method,
+          })
+          // Update local member renewal date + add payment
+          set((s) => ({
+            members: s.members.map((m) =>
+              m.id === data.member_id
+                ? { ...m, renewalDate: result.newRenewalDate, renewal_date: result.newRenewalDate }
+                : m
+            ),
+            payments:      [result.payment, ...s.payments],
+          }))
+          // Refresh notifications
+          const notifications = await notificationsApi.list(get().currentBranch).catch(() => get().notifications)
+          set({ notifications })
+          get().addToast('Success', `Recorded Birr ${data.amount} payment and extended membership.`)
+          return result.payment
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
         }
-
-        const notif = {
-          id:         'n_' + Date.now(),
-          type:       'Success',
-          message:    `Payment of Birr ${data.amount} recorded for ${member.first_name} ${member.last_name}. Plan extended to ${newDate}.`,
-          member_id:  member.id,
-          branch_id:  member.branch_id,
-          is_read:    false,
-          created_at: new Date().toISOString(),
-        }
-
-        const snapshot = { members: get().members, payments: get().payments, notifications: get().notifications }
-
-        set((s) => ({
-          members:       s.members.map((m) => m.id === member.id ? { ...m, renewal_date: newDate } : m),
-          payments:      [newPayment, ...s.payments],
-          notifications: [notif, ...s.notifications],
-        }))
-
-        if (get().logAction) get().logAction(`Recorded Birr ${data.amount} payment for ${member.first_name}`, snapshot)
-        get().addToast('Success', `Recorded Birr ${data.amount} payment and extended membership.`)
-        return newPayment
       },
 
-      recordDailyEntry: (branchId) => {
-        const branch = get().branches.find(b => b.id === branchId)
-        if (!branch) return
-        const amount = parseFloat(branch.daily_rate || 0)
-        
-        const newPayment = {
-          id:          genPaymentId(),
-          member_id:   'Daily_Entry',
-          amount,
-          currency:    'Birr',
-          method:      'Cash',
-          plan_label:  `Daily Entry at ${branch.name}`,
-          recorded_by: get().currentUser?.name ?? 'System',
-          paid_at:     new Date().toISOString(),
+      recordDailyEntry: async (branchId) => {
+        const branch = get().branches.find((b) => b.id === branchId)
+        try {
+          const payment = await paymentsApi.dailyEntry({
+            branch_id:      branchId,
+            payment_method: 'Cash',
+          })
+          set((s) => ({ payments: [payment, ...s.payments] }))
+          get().addToast('Success', `Recorded Daily Entry for Birr ${branch?.dailyRate ?? branch?.daily_rate ?? '?'}.`)
+          return payment
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
         }
-
-        const snapshot = { payments: get().payments }
-        set((s) => ({ payments: [newPayment, ...s.payments] }))
-        if (get().logAction) get().logAction(`Recorded Daily Entry for Birr ${amount}`, snapshot)
-        get().addToast('Success', `Recorded Daily Entry for Birr ${amount}.`)
       },
 
       // ─────────────────────────────────────────────────────────────────────
       // SCHEDULES
       // ─────────────────────────────────────────────────────────────────────
-      scheduleSession: (trainerId, day, time, memberId) => {
-        set((s) => {
-          const existing = s.schedules.find((sc) => sc.trainer_id === trainerId)
-          if (existing) {
-            return {
-              schedules: s.schedules.map((sc) =>
-                sc.trainer_id === trainerId
-                  ? { ...sc, sessions: [...sc.sessions, { day, time, member_id: memberId }] }
-                  : sc
-              ),
-            }
-          }
-          return { schedules: [...s.schedules, { trainer_id: trainerId, sessions: [{ day, time, member_id: memberId }] }] }
-        })
-        
-        const notif = {
-          id:         'n_sched_' + Date.now(),
-          type:       'Info',
-          message:    `New session scheduled on ${day} at ${time}.`,
-          member_id:  memberId,
-          branch_id:  get().currentBranch,
-          is_read:    false,
-          created_at: new Date().toISOString(),
+      scheduleSession: async (trainerId, day, time, memberId) => {
+        try {
+          const schedule = await schedulesApi.book({
+            trainer_id: trainerId,
+            day:        parseInt(day),
+            time,
+            member_id:  memberId,
+          })
+          const schedules = await schedulesApi.list().catch(() => get().schedules)
+          const notifications = await notificationsApi.list(get().currentBranch).catch(() => get().notifications)
+          set({ schedules, notifications })
+          get().addToast('Success', 'Session scheduled successfully.')
+          return schedule
+        } catch (err) {
+          // Surface 409 conflict as a toast
+          get().addToast('Error', err.message)
+          throw err
         }
-        set((s) => ({ notifications: [notif, ...s.notifications] }))
-        
-        get().addToast('Success', 'Session scheduled successfully.')
       },
 
-      cancelSession: (trainerId, day, time) => {
-        set((s) => ({
-          schedules: s.schedules.map((sc) =>
-            sc.trainer_id === trainerId
-              ? { ...sc, sessions: sc.sessions.filter((sess) => !(sess.day === day && sess.time === time)) }
-              : sc
-          ),
-        }))
-        get().addToast('Info', 'Session cancelled.')
+      cancelSession: async (trainerId, day, time) => {
+        try {
+          await schedulesApi.cancel(trainerId, day, time)
+          const schedules = await schedulesApi.list().catch(() => get().schedules)
+          set({ schedules })
+          get().addToast('Info', 'Session cancelled.')
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
+        }
       },
 
       // ─────────────────────────────────────────────────────────────────────
       // GYMS & BRANCHES
       // ─────────────────────────────────────────────────────────────────────
-      addGym: (name) => {
-        const newGym = { id: 'g_' + Date.now(), name }
-        set((s) => ({ gyms: [...(s.gyms || [{ id: 'g1', name: 'GYM-SYS Franchise' }]), newGym] }))
-        get().addToast('Success', `Gym Profile "${name}" created.`)
-      },
-
-      deleteGym: (id) => {
-        set((s) => ({ gyms: s.gyms.filter((g) => g.id !== id) }))
-        get().addToast('Warning', 'Gym profile removed.')
-      },
-
-      addBranch: (data) => {
-        const newBranch = {
-          id:           'b_' + Date.now(),
-          gym_id:       data.gym_id || 'g1',
-          name:         data.name,
-          address:      data.address,
-          phone:        data.phone,
-          manager_name: data.manager_name || 'Unassigned',
-          opening_time: data.opening_time || '06:00 AM',
-          closing_time: data.closing_time || '10:00 PM',
-          lunch_start:  data.lunch_start || '12:00 PM',
-          lunch_end:    data.lunch_end || '02:00 PM',
-          monthly_rate: parseFloat(data.monthly_rate || 0),
-          quarterly_rate: parseFloat(data.quarterly_rate || 0),
-          daily_rate: parseFloat(data.daily_rate || 0),
+      addGym: async (name) => {
+        try {
+          const gym = await gymsApi.create({ name })
+          set((s) => ({ gyms: [...(s.gyms || []), gym] }))
+          get().addToast('Success', `Gym Profile "${name}" created.`)
+          return gym
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
         }
-        set((s) => ({ branches: [...s.branches, newBranch] }))
-        get().addToast('Success', `Branch "${newBranch.name}" created under gym.`)
       },
 
-      updateBranch: (data) => {
-        set((s) => ({
-          branches: s.branches.map((b) => (b.id === data.id ? { ...b, ...data } : b)),
-        }))
-        get().addToast('Success', `Branch "${data.name}" updated.`)
+      deleteGym: async (id) => {
+        try {
+          await gymsApi.delete(id)
+          set((s) => ({ gyms: s.gyms.filter((g) => g.id !== id) }))
+          get().addToast('Warning', 'Gym profile removed.')
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
+        }
       },
 
-      deleteBranch: (id) => {
-        set((s) => ({ branches: s.branches.filter((b) => b.id !== id) }))
-        get().addToast('Warning', 'Branch deactivated.')
+      addBranch: async (data) => {
+        try {
+          const branch = await branchesApi.create(data)
+          set((s) => ({ branches: [...s.branches, branch] }))
+          get().addToast('Success', `Branch "${branch.name}" created.`)
+          return branch
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
+        }
+      },
+
+      updateBranch: async (data) => {
+        try {
+          const updated = await branchesApi.update(data.id, data)
+          set((s) => ({
+            branches: s.branches.map((b) => b.id === data.id ? { ...b, ...updated } : b),
+          }))
+          get().addToast('Success', `Branch "${updated.name ?? data.name}" updated.`)
+          return updated
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
+        }
+      },
+
+      deleteBranch: async (id) => {
+        try {
+          await branchesApi.delete(id)
+          set((s) => ({ branches: s.branches.filter((b) => b.id !== id) }))
+          get().addToast('Warning', 'Branch deactivated.')
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
+        }
       },
 
       // ─────────────────────────────────────────────────────────────────────
       // AMENITIES
       // ─────────────────────────────────────────────────────────────────────
-      addAmenity: (data) => {
-        const newAmenity = {
-          id: 'a_' + Date.now(),
-          branch_id: data.branch_id || get().currentBranch === 'all' ? (get().branches[0]?.id || 'b1') : get().currentBranch,
-          name: data.name,
-          category: data.category,
-          price: parseFloat(data.price),
-          stock: parseInt(data.stock),
-          image: data.image || null,
+      addAmenity: async (data) => {
+        const branchId = get().currentBranch === 'all'
+          ? get().branches[0]?.id
+          : get().currentBranch
+        try {
+          const amenity = await amenitiesApi.create({ ...data, branch_id: data.branch_id || branchId })
+          set((s) => ({ amenities: [...s.amenities, amenity] }))
+          get().addToast('Success', `Added ${amenity.name} to amenities.`)
+          return amenity
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
         }
-        set((s) => ({ amenities: [...s.amenities, newAmenity] }))
-        get().addToast('Success', `Added ${newAmenity.name} to amenities.`)
       },
 
-      sellAmenity: (item) => {
-        if (item.stock <= 0) {
-          get().addToast('Error', 'Item is out of stock.')
-          return
+      sellAmenity: async (item) => {
+        try {
+          const result = await amenitiesApi.sell(item.id)
+          set((s) => ({
+            amenities: s.amenities.map((a) =>
+              a.id === item.id ? { ...a, stock: result.remainingStock } : a
+            ),
+            payments: [result.payment, ...s.payments],
+          }))
+          get().addToast('Success', `Sold ${item.name} for Birr ${item.price}.`)
+          return result
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
         }
-
-        const newPayment = {
-          id:          genPaymentId(),
-          member_id:   'Amenity_Sale',
-          amount:      parseFloat(item.price),
-          currency:    'Birr',
-          method:      'Cash',
-          plan_label:  `Sold ${item.name}`,
-          recorded_by: get().currentUser?.name ?? 'System',
-          paid_at:     new Date().toISOString(),
-        }
-
-        const snapshot = { amenities: get().amenities, payments: get().payments }
-
-        set((s) => ({
-          amenities: s.amenities.map(a => a.id === item.id ? { ...a, stock: a.stock - 1 } : a),
-          payments: [newPayment, ...s.payments]
-        }))
-
-        if (get().logAction) get().logAction(`Sold ${item.name}`, snapshot)
-        get().addToast('Success', `Sold ${item.name} for Birr ${item.price}.`)
       },
 
-      deleteAmenity: (id) => {
+      deleteAmenity: async (id) => {
+        // No backend DELETE endpoint in Step 3; keep local for now
         set((s) => ({ amenities: s.amenities.filter((a) => a.id !== id) }))
         get().addToast('Warning', 'Amenity removed.')
       },
@@ -374,87 +401,79 @@ export const useStore = create(
       // ─────────────────────────────────────────────────────────────────────
       // EXPENSES
       // ─────────────────────────────────────────────────────────────────────
-      addExpense: (data) => {
-        const newExpense = {
-          id: 'exp_' + Date.now(),
-          branch_id: get().currentBranch === 'all' ? (get().branches[0]?.id || 'b1') : get().currentBranch,
-          type: data.type,
-          reason: data.reason,
-          amount: parseFloat(data.amount),
-          date: new Date().toISOString(),
-          recorded_by: get().currentUser?.name ?? 'System',
+      addExpense: async (data) => {
+        const branchId = get().currentBranch === 'all'
+          ? get().branches[0]?.id
+          : get().currentBranch
+        try {
+          const expense = await expensesApi.create({ ...data, branch_id: data.branch_id || branchId })
+          set((s) => ({ expenses: [expense, ...(s.expenses || [])] }))
+          get().addToast('Success', `Recorded expense of Birr ${expense.amount}.`)
+          return expense
+        } catch (err) {
+          get().addToast('Error', err.message)
+          throw err
         }
-        set((s) => ({ expenses: [newExpense, ...(s.expenses || [])] }))
-        get().addToast('Success', `Recorded expense of Birr ${newExpense.amount}.`)
       },
 
       // ─────────────────────────────────────────────────────────────────────
       // NOTIFICATIONS
       // ─────────────────────────────────────────────────────────────────────
-      markNotifRead: (id) => {
-        set((s) => ({
-          notifications: s.notifications.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
-        }))
-      },
-
-      markAllNotifsRead: () => {
-        set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, is_read: true })) }))
-        get().addToast('Info', 'All notifications marked as read.')
-      },
-
-      // ─────────────────────────────────────────────────────────────────────
-      // CRON: RECALCULATE MEMBERSHIP STATUSES
-      // ─────────────────────────────────────────────────────────────────────
-      runStatusRecalculation: () => {
-        const { members, notifications } = get()
-        const newAlerts = []
-
-        members.forEach((m) => {
-          const status = getMemberStatus(m.renewal_date)
-          if (status === 'Overdue' && !notifications.some((n) => n.member_id === m.id && n.type === 'Overdue')) {
-            newAlerts.push({
-              id:         'n_cron_' + m.id + '_' + Date.now(),
-              type:       'Overdue',
-              message:    `Membership overdue: ${m.first_name} ${m.last_name} (since ${m.renewal_date})`,
-              member_id:  m.id,
-              branch_id:  m.branch_id,
-              is_read:    false,
-              created_at: new Date().toISOString(),
-            })
-          } else if (status === 'Expiring' && !notifications.some((n) => n.member_id === m.id && n.type === 'Warning')) {
-            newAlerts.push({
-              id:         'n_cron_' + m.id + '_' + Date.now(),
-              type:       'Warning',
-              message:    `Membership expiring soon: ${m.first_name} ${m.last_name} (on ${m.renewal_date})`,
-              member_id:  m.id,
-              branch_id:  m.branch_id,
-              is_read:    false,
-              created_at: new Date().toISOString(),
-            })
-          }
-        })
-
-        if (newAlerts.length > 0) {
-          set((s) => ({ notifications: [...newAlerts, ...s.notifications] }))
+      markNotifRead: async (id) => {
+        try {
+          await notificationsApi.markRead(id)
+          set((s) => ({
+            notifications: s.notifications.map((n) => n.id === id ? { ...n, isRead: true, is_read: true } : n),
+          }))
+        } catch {
+          // Optimistic update already done locally — ignore error
         }
+      },
 
-        get().addToast('Success', `Status recalculated. ${newAlerts.length} new alert(s) generated.`)
+      markAllNotifsRead: async () => {
+        const branchId = get().currentBranch
+        try {
+          await notificationsApi.markAllRead(branchId)
+          set((s) => ({
+            notifications: s.notifications.map((n) => ({ ...n, isRead: true, is_read: true })),
+          }))
+          get().addToast('Info', 'All notifications marked as read.')
+        } catch (err) {
+          get().addToast('Error', err.message)
+        }
       },
 
       // ─────────────────────────────────────────────────────────────────────
-      // LOGS / UNDO
+      // CRON: RECALCULATE MEMBERSHIP STATUSES (local only — UI helper)
+      // ─────────────────────────────────────────────────────────────────────
+      runStatusRecalculation: async () => {
+        // Re-fetch fresh members from the server
+        try {
+          const members = await membersApi.list(get().currentBranch)
+          set({ members })
+          get().addToast('Success', 'Member statuses refreshed from server.')
+        } catch {
+          get().addToast('Error', 'Failed to refresh member statuses.')
+        }
+      },
+
+      // ─────────────────────────────────────────────────────────────────────
+      // LOGS (local only)
       // ─────────────────────────────────────────────────────────────────────
       logAction: (description, undoSnapshot) => {
         const id = 'log_' + Date.now()
         set((s) => ({
-          actionLogs: [{ id, description, timestamp: new Date().toISOString(), undoSnapshot }, ...(s.actionLogs || [])].slice(0, 50)
+          actionLogs: [
+            { id, description, timestamp: new Date().toISOString(), undoSnapshot },
+            ...(s.actionLogs || []),
+          ].slice(0, 50),
         }))
       },
 
       undoAction: (logId) => {
-        const log = get().actionLogs?.find(l => l.id === logId)
+        const log = get().actionLogs?.find((l) => l.id === logId)
         if (!log || !log.undoSnapshot) return
-        set((s) => ({ ...log.undoSnapshot, actionLogs: s.actionLogs.filter(l => l.id !== logId) }))
+        set((s) => ({ ...log.undoSnapshot, actionLogs: s.actionLogs.filter((l) => l.id !== logId) }))
         get().addToast('Success', `Undid action: ${log.description}`)
       },
 
@@ -472,14 +491,21 @@ export const useStore = create(
       dismissToast: (id) => {
         set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }))
       },
+
+      // ─────────────────────────────────────────────────────────────────────
+      // COMPAT: addSystemUser kept for Admin Portal page
+      // ─────────────────────────────────────────────────────────────────────
+      addSystemUser: (user) => {
+        set((s) => ({ systemUsers: [...(s.systemUsers || []), user] }))
+        get().addToast('Success', `System account created for ${user.name}`)
+      },
     }),
     {
       name: 'gymsys-store',
-      // Only persist data, not ephemeral state like toasts
       partialize: (s) => ({
         currentUser:   s.currentUser,
         currentBranch: s.currentBranch,
-        gyms:          s.gyms || [{ id: 'g1', name: 'GYM-SYS Franchise' }],
+        gyms:          s.gyms,
         branches:      s.branches,
         trainers:      s.trainers,
         members:       s.members,
@@ -489,7 +515,7 @@ export const useStore = create(
         amenities:     s.amenities,
         expenses:      s.expenses || [],
         actionLogs:    s.actionLogs || [],
-        systemUsers:   s.systemUsers || TEST_USERS,
+        systemUsers:   s.systemUsers || [],
       }),
     }
   )
